@@ -1,6 +1,8 @@
 "use client"
 
+import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
+import { toast } from "sonner"
 import {
   Bold,
   Code,
@@ -10,18 +12,25 @@ import {
   Italic,
   List,
   ListOrdered,
+  Lock,
   NotebookPen,
   Quote,
   Redo2,
+  Save,
   Strikethrough,
   Undo2,
 } from "lucide-react"
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react"
+import type { JSONContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { SaveShareDialog } from "@/components/notes/save-share-dialog"
+import { ApiRequestError, apiFetch } from "@/lib/client/api"
+import { deriveTitleFromContent } from "@/lib/notes/title"
+import { clearDraft, loadDraft, saveDraft } from "@/lib/sync/drafts"
 
 /** When the editor has not mounted yet (SSR / first render), use these. */
 const IDLE_TOOLBAR_STATE = {
@@ -44,14 +53,28 @@ const IDLE_TOOLBAR_STATE = {
 
 type ToolbarState = typeof IDLE_TOOLBAR_STATE
 
+export interface NoteEditorProps {
+  /** Existing Tiptap JSON to load (edit mode). Absent on /new. */
+  initialContent?: unknown
+  /** Present when editing an already-saved note. */
+  publicId?: string
+  /** Show a "lock again" action that revokes the current edit session. */
+  onRevoke?: () => void
+}
+
 /**
- * Phase 1 base editor: mounts Tiptap with core prose formatting.
- * Saving to Supabase is intentionally NOT wired up yet (Phase 2).
+ * The note editor. On /new it persists the working draft to IndexedDB
+ * (Dexie) so content survives refresh; after the first save it issues
+ * incremental saves against the created note.
  */
-export function NoteEditor() {
+export function NoteEditor({
+  initialContent,
+  publicId,
+  onRevoke,
+}: NoteEditorProps) {
   const editor = useEditor({
     extensions: [StarterKit],
-    content: "",
+    content: initialContent ?? "",
     immediatelyRender: false,
     editorProps: {
       attributes: {
@@ -61,8 +84,64 @@ export function NoteEditor() {
     },
   })
 
-  // useEditorState subscribes to the transactions that affect the toolbar's
-  // active states and the live counts.
+  const [savedPublicId, setSavedPublicId] = useState<string | null>(
+    publicId ?? null
+  )
+  const [savedTitle, setSavedTitle] = useState<string>("")
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false)
+  // Bumped each time the dialog opens so it remounts with fresh state.
+  const [dialogSession, setDialogSession] = useState(0)
+  const [saving, setSaving] = useState(false)
+  const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const isCreateMode = !savedPublicId
+
+  // Restore the local draft once, only in create mode.
+  useEffect(() => {
+    if (!isCreateMode || !editor) {
+      return
+    }
+    let cancelled = false
+    loadDraft()
+      .then((draft) => {
+        if (!cancelled && draft?.content && editor.isEmpty) {
+          editor.commands.setContent(draft.content as JSONContent)
+        }
+      })
+      .catch(() => {
+        // IndexedDB unavailable (private mode etc.) — drafting just stays
+        // in-memory; never block writing.
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [editor, isCreateMode])
+
+  const persistDraft = useCallback(() => {
+    if (!editor || !isCreateMode) {
+      return
+    }
+    if (draftTimer.current) {
+      clearTimeout(draftTimer.current)
+    }
+    const snapshot = editor.getJSON()
+    draftTimer.current = setTimeout(() => {
+      saveDraft(snapshot).catch(() => {})
+    }, 400)
+  }, [editor, isCreateMode])
+
+  // Subscribe the draft persistence to editor updates.
+  useEffect(() => {
+    if (!editor) {
+      return
+    }
+    const handler = () => persistDraft()
+    editor.on("update", handler)
+    return () => {
+      editor.off("update", handler)
+    }
+  }, [editor, persistDraft])
+
   const toolbar: ToolbarState =
     useEditorState({
       editor,
@@ -70,27 +149,94 @@ export function NoteEditor() {
         if (!currentEditor) {
           return IDLE_TOOLBAR_STATE
         }
-      const text = currentEditor.getText()
-      const trimmed = text.trim()
-      return {
-        canUndo: currentEditor.can().undo(),
-        canRedo: currentEditor.can().redo(),
-        bold: currentEditor.isActive("bold"),
-        italic: currentEditor.isActive("italic"),
-        strike: currentEditor.isActive("strike"),
-        code: currentEditor.isActive("code"),
-        h1: currentEditor.isActive("heading", { level: 1 }),
-        h2: currentEditor.isActive("heading", { level: 2 }),
-        h3: currentEditor.isActive("heading", { level: 3 }),
-        bulletList: currentEditor.isActive("bulletList"),
-        orderedList: currentEditor.isActive("orderedList"),
-        blockquote: currentEditor.isActive("blockquote"),
-        codeBlock: currentEditor.isActive("codeBlock"),
-        words: trimmed ? trimmed.split(/\s+/).length : 0,
-        characters: text.length,
-      }
+        const text = currentEditor.getText()
+        const trimmed = text.trim()
+        return {
+          canUndo: currentEditor.can().undo(),
+          canRedo: currentEditor.can().redo(),
+          bold: currentEditor.isActive("bold"),
+          italic: currentEditor.isActive("italic"),
+          strike: currentEditor.isActive("strike"),
+          code: currentEditor.isActive("code"),
+          h1: currentEditor.isActive("heading", { level: 1 }),
+          h2: currentEditor.isActive("heading", { level: 2 }),
+          h3: currentEditor.isActive("heading", { level: 3 }),
+          bulletList: currentEditor.isActive("bulletList"),
+          orderedList: currentEditor.isActive("orderedList"),
+          blockquote: currentEditor.isActive("blockquote"),
+          codeBlock: currentEditor.isActive("codeBlock"),
+          words: trimmed ? trimmed.split(/\s+/).length : 0,
+          characters: text.length,
+        }
       },
     }) ?? IDLE_TOOLBAR_STATE
+
+  async function saveExisting() {
+    if (!editor || !savedPublicId) {
+      return
+    }
+    setSaving(true)
+    try {
+      await apiFetch<{ revisionNo: number }>(
+        `/api/notes/${savedPublicId}/save`,
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            title: savedTitle || deriveTitleFromContent(editor.getJSON()),
+            content: editor.getJSON(),
+            contentFormat: "tiptap_json",
+          }),
+        }
+      )
+      toast.success("Saved.")
+    } catch (error) {
+      if (error instanceof ApiRequestError) {
+        toast.error(error.message)
+      } else {
+        toast.error("Could not save. You may be offline — try again.")
+      }
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const openSaveDialog = useCallback(() => {
+    if (!editor) {
+      return
+    }
+    if (editor.isEmpty) {
+      toast.error("Write something first — the note is still empty.")
+      return
+    }
+    if (isCreateMode) {
+      setDialogSession((session) => session + 1)
+      setSaveDialogOpen(true)
+      return
+    }
+    // Editing an existing note: save directly.
+    void saveExisting()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editor, isCreateMode, savedPublicId, savedTitle])
+
+  // Ctrl/Cmd+S opens the save flow without hijacking reserved browser
+  // shortcuts (Ctrl+N/W/T are left untouched).
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
+        event.preventDefault()
+        openSaveDialog()
+      }
+    }
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [openSaveDialog])
+
+  function handleSaved(newPublicId: string, title: string) {
+    setSavedPublicId(newPublicId)
+    setSavedTitle(title)
+    clearDraft().catch(() => {})
+    toast.success("Note saved.")
+  }
 
   return (
     <div className="flex min-h-svh flex-col">
@@ -104,12 +250,19 @@ export function NoteEditor() {
           OpenNotepad
         </Link>
         <div className="flex items-center gap-2">
-          <p
-            className="text-xs text-muted-foreground"
-            aria-live="polite"
-          >
+          <p className="text-xs text-muted-foreground" aria-live="polite">
             {toolbar.words} words · {toolbar.characters} characters
           </p>
+          {onRevoke ? (
+            <Button variant="ghost" size="sm" onClick={onRevoke}>
+              <Lock className="size-4" aria-hidden />
+              Lock again
+            </Button>
+          ) : null}
+          <Button size="sm" onClick={openSaveDialog} disabled={saving}>
+            <Save className="size-4" aria-hidden />
+            {saving ? "Saving…" : isCreateMode ? "Save & Share" : "Save"}
+          </Button>
           <ThemeToggle />
         </div>
       </header>
@@ -230,6 +383,17 @@ export function NoteEditor() {
 
         <EditorContent editor={editor} className="flex-1" />
       </div>
+
+      <SaveShareDialog
+        key={dialogSession}
+        open={saveDialogOpen}
+        onOpenChange={setSaveDialogOpen}
+        content={editor?.getJSON() ?? null}
+        suggestedTitle={
+          editor ? deriveTitleFromContent(editor.getJSON()) : ""
+        }
+        onSaved={handleSaved}
+      />
     </div>
   )
 }

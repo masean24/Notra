@@ -10,7 +10,7 @@ export type NoteVisibility = "public" | "private"
 export type EditingPolicy = "edit_code" | "account" | "read_only"
 export type ContentFormat = "tiptap_json" | "markdown" | "plain_text"
 
-export interface ProfileRow {
+export type ProfileRow = {
   id: string
   username: string | null
   display_name: string | null
@@ -20,7 +20,7 @@ export interface ProfileRow {
   updated_at: string
 }
 
-export interface ProfileInsert {
+export type ProfileInsert = {
   id: string
   username?: string | null
   display_name?: string | null
@@ -30,7 +30,7 @@ export interface ProfileInsert {
   updated_at?: string
 }
 
-export interface ProfileUpdate {
+export type ProfileUpdate = {
   id?: string
   username?: string | null
   display_name?: string | null
@@ -40,7 +40,7 @@ export interface ProfileUpdate {
   updated_at?: string
 }
 
-export interface NoteRow {
+export type NoteRow = {
   id: string
   public_id: string
   owner_id: string | null
@@ -63,7 +63,7 @@ export interface NoteRow {
   updated_at: string
 }
 
-export interface NoteInsert {
+export type NoteInsert = {
   id?: string
   public_id?: string
   owner_id?: string | null
@@ -82,7 +82,7 @@ export interface NoteInsert {
   updated_at?: string
 }
 
-export interface NoteUpdate {
+export type NoteUpdate = {
   id?: string
   public_id?: string
   owner_id?: string | null
@@ -118,7 +118,51 @@ export type Database = {
       }
     }
     Views: Record<string, never>
-    Functions: Record<string, never>
+    Functions: {
+      create_guest_note: {
+        Args: {
+          p_title: string
+          p_content: unknown
+          p_content_format: string
+          p_editing_policy: string
+          p_edit_code: string | null
+          p_expires_at: string | null
+          p_visibility: string
+        }
+        Returns: string
+      }
+      save_note: {
+        Args: {
+          p_public_id: string
+          p_title: string
+          p_content: unknown
+          p_content_format: string
+          p_token: string | null
+        }
+        Returns: number
+      }
+      verify_edit_code: {
+        Args: {
+          p_public_id: string
+          p_code: string
+          p_token: string
+          p_ip_hash: string
+        }
+        Returns: unknown
+      }
+      check_edit_session: {
+        Args: { p_public_id: string; p_token: string }
+        Returns: boolean
+      }
+      revoke_edit_session: {
+        Args: { p_public_id: string; p_token: string }
+        Returns: boolean
+      }
+      consume_rate_limit: {
+        Args: { p_key: string; p_limit: number; p_window_seconds: number }
+        Returns: boolean
+      }
+    }
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>
   }

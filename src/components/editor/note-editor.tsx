@@ -64,6 +64,20 @@ import {
   type ExportFormat,
 } from "@/lib/notes/serialize"
 import { clearDraft, getSetting, loadDraft, saveDraft, setSetting } from "@/lib/sync/drafts"
+import {
+  deleteConflict,
+    enqueueOp,
+  getOpForNote,
+  listConflicts,
+  listOpsFifo,
+  updateOp,
+  type ConflictRow,
+} from "@/lib/sync/drafts"
+import {
+  initSyncEngine,
+  runSync,
+  SYNC_EVENT_NAME,
+} from "@/lib/sync/engine"
 
 /** When the editor has not mounted yet (SSR / first render), use these. */
 const IDLE_TOOLBAR_STATE = {
@@ -95,6 +109,8 @@ export interface NoteEditorProps {
   onRevoke?: () => void
   /** Whether the visitor is signed in — owned-note saves skip edit codes. */
   isAuthenticated?: boolean
+  /** Server updated_at at load time — base for offline conflict detection. */
+  serverUpdatedAt?: string | null
 }
 
 /**
@@ -107,6 +123,7 @@ export function NoteEditor({
   publicId,
   onRevoke,
   isAuthenticated = false,
+  serverUpdatedAt = null,
 }: NoteEditorProps) {
   const editor = useEditor({
     extensions: [StarterKit],
@@ -137,6 +154,11 @@ export function NoteEditor({
   const [zenMode, setZenMode] = useState(false)
   // Word target (SPEC §6): 0 = no goal. Persisted in IndexedDB.
   const [wordTarget, setWordTarget] = useState(0)
+  // Offline sync (SPEC §10): queue size, parked conflicts for this note,
+  // and whether a queued op needs the edit code re-entered.
+  const [queuedCount, setQueuedCount] = useState(0)
+  const [conflicts, setConflicts] = useState<ConflictRow[]>([])
+  const [reauthPending, setReauthPending] = useState(false)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -150,6 +172,35 @@ export function NoteEditor({
       })
       .catch(() => {})
   }, [])
+
+  // Offline sync wiring: start the engine, then track queue/conflict state.
+  const noteId = savedPublicId
+  useEffect(() => {
+    initSyncEngine()
+
+    async function refreshSyncState() {
+      const ops = await listOpsFifo()
+      setQueuedCount(ops.length)
+      setReauthPending(
+        Boolean(noteId && ops.some((op) => op.needsReauth && op.publicId === noteId))
+      )
+      if (noteId) {
+        const rows = await listConflicts()
+        setConflicts(rows.filter((row) => row.publicId === noteId))
+      } else {
+        setConflicts([])
+      }
+    }
+
+    void refreshSyncState()
+    function onSyncEvent() {
+      void refreshSyncState()
+    }
+    window.addEventListener(SYNC_EVENT_NAME, onSyncEvent)
+    return () => {
+      window.removeEventListener(SYNC_EVENT_NAME, onSyncEvent)
+    }
+  }, [noteId])
 
   function changeWordTarget(value: number) {
     setWordTarget(value)
@@ -255,7 +306,20 @@ export function NoteEditor({
       if (error instanceof ApiRequestError) {
         toast.error(error.message)
       } else {
-        toast.error("Could not save. You may be offline — try again.")
+        // Network failure (SPEC §10): queue the save instead of dropping it.
+        // The sync engine replays it when connectivity returns.
+        await enqueueOp({
+          kind: "save",
+          publicId: savedPublicId,
+          title: savedTitle || deriveTitleFromContent(editor.getJSON()),
+          content: editor.getJSON(),
+          contentFormat: "tiptap_json",
+          baseUpdatedAt: serverUpdatedAt,
+          requiresAuth: isAuthenticated,
+          createdAt: Date.now(),
+        })
+        toast.info("You appear offline — your changes are queued and will sync automatically.")
+        void runSync()
       }
     } finally {
       setSaving(false)
@@ -415,8 +479,123 @@ export function NoteEditor({
   const targetProgress =
     wordTarget > 0 ? Math.min(100, Math.round((toolbar.words / wordTarget) * 100)) : 0
 
+  async function retryAfterUnlock() {
+    if (!savedPublicId) {
+      return
+    }
+    const op = await getOpForNote(savedPublicId)
+    if (op?.id) {
+      await updateOp(op.id, { needsReauth: false })
+    }
+    setReauthPending(false)
+    void runSync()
+  }
+
+  async function keepMyVersion(conflict: ConflictRow) {
+    if (!editor || !savedPublicId || !conflict.id) {
+      return
+    }
+    setSaving(true)
+    try {
+      await apiFetch(`/api/notes/${savedPublicId}/save`, {
+        method: "PUT",
+        body: JSON.stringify({
+          title: conflict.title,
+          content: conflict.content,
+          contentFormat: conflict.contentFormat,
+        }),
+      })
+      await deleteConflict(conflict.id)
+      editor.commands.setContent((conflict.content ?? "") as JSONContent)
+      toast.success("Your version was saved on top of the server copy.")
+    } catch (error) {
+      toast.error(
+        error instanceof ApiRequestError ? error.message : "Could not save your version."
+      )
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function applyServerVersion(conflict: ConflictRow) {
+    if (!editor || !savedPublicId || !conflict.id) {
+      return
+    }
+    try {
+      const data = await apiFetch<{
+        content: unknown
+        title: string
+      }>(`/api/notes/${savedPublicId}`)
+      editor.commands.setContent((data.content ?? "") as JSONContent)
+      setSavedTitle(data.title)
+      await deleteConflict(conflict.id)
+      toast.success("Loaded the server version — your offline copy was discarded.")
+    } catch (error) {
+      toast.error(
+        error instanceof ApiRequestError ? error.message : "Could not load the server version."
+      )
+    }
+  }
+
+  const isOffline =
+    typeof navigator !== "undefined" && navigator.onLine === false
+
   return (
     <div className="flex min-h-svh flex-col">
+      {/* Offline / sync banners (SPEC §10) */}
+      {conflicts.length > 0 || reauthPending || queuedCount > 0 ? (
+        <div className="mx-auto w-full max-w-3xl px-4 pt-4">
+          {conflicts.map((conflict) => (
+            <div
+              key={conflict.id}
+              role="status"
+              className="mb-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm"
+            >
+              <p className="font-medium">The server copy changed while you were offline.</p>
+              <p className="mb-2 text-muted-foreground">
+                Keep your offline version, or load the server version instead?
+              </p>
+              <div className="flex items-center gap-2">
+                <Button size="sm" disabled={saving} onClick={() => void keepMyVersion(conflict)}>
+                  Keep mine
+                </Button>
+                <Button variant="outline" size="sm" disabled={saving} onClick={() => void applyServerVersion(conflict)}>
+                  Use server
+                </Button>
+              </div>
+            </div>
+          ))}
+          {reauthPending ? (
+            <div
+              role="status"
+              className="mb-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm"
+            >
+              <p className="font-medium">Your editing session expired while offline.</p>
+              <p className="mb-2 text-muted-foreground">
+                Your changes are safe. Re-enter the edit code, then resume the sync.
+              </p>
+              <div className="flex items-center gap-2">
+                <Button size="sm" render={<Link href={`/n/${savedPublicId ?? ""}`} />}>
+                  Re-enter edit code
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => void retryAfterUnlock()}>
+                  Retry after unlocking
+                </Button>
+              </div>
+            </div>
+          ) : null}
+          {queuedCount > 0 && isOffline ? (
+            <div
+              role="status"
+              className="mb-2 rounded-lg border bg-muted/50 p-3 text-sm text-muted-foreground"
+            >
+              Offline — {queuedCount} queued change{queuedCount === 1 ? "" : "s"} will sync
+              automatically when you reconnect.
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
       {!zenMode ? (
       <header className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b bg-background/80 px-4 py-2 backdrop-blur-md">
         <Link

@@ -49,6 +49,7 @@ export default async function PublicNotePage({
         initialContent={note.content}
         publicId={note.public_id}
         isAuthenticated
+        serverUpdatedAt={note.updated_at}
       />
     )
   }

@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { ApiRequestError, apiFetch } from "@/lib/client/api"
+import { enqueueOp } from "@/lib/sync/drafts"
 import {
   generateRandomEditCode,
   isValidCustomEditCode,
@@ -160,8 +161,24 @@ export function SaveShareDialog({
     } catch (error) {
       if (error instanceof ApiRequestError) {
         toast.error(error.message)
+      } else if (isAuthenticated) {
+        // Offline create (SPEC §10): signed-in creates need no edit code, so
+        // the note can be created by the sync engine once back online.
+        await enqueueOp({
+          kind: "create",
+          title,
+          content,
+          contentFormat: "tiptap_json",
+          baseUpdatedAt: null,
+          requiresAuth: true,
+          createdAt: Date.now(),
+        })
+        toast.info("You appear offline — the note will be created when you reconnect.")
+        onOpenChange(false)
       } else {
-        toast.error("Could not save the note. Please try again.")
+        // Guest creates need an edit code (shown once, never persisted) —
+        // they cannot be queued. The local draft already survives offline.
+        toast.error("Could not save the note. You appear to be offline.")
       }
     } finally {
       setSubmitting(false)

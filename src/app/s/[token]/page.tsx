@@ -78,6 +78,7 @@ export default async function ShareRedemptionPage({
         key={publicId}
         initialContent={payload.content}
         publicId={publicId}
+        serverUpdatedAt={payload.updated_at}
       />
     )
   }

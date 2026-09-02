@@ -63,6 +63,7 @@ export function NoteView({ note, editable }: NoteViewProps) {
         initialContent={note.content}
         publicId={note.public_id}
         onRevoke={revoking ? undefined : handleRevoke}
+        serverUpdatedAt={note.updated_at}
       />
     )
   }

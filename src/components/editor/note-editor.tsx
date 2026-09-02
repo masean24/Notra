@@ -15,12 +15,18 @@ import {
   Link2,
   List,
   ListOrdered,
+  ListTree,
   Lock,
+  Maximize,
+  Minimize,
   NotebookPen,
+  LayoutTemplate,
   Quote,
+  QrCode,
   Redo2,
   Save,
   Strikethrough,
+  Target,
   Undo2,
   Upload,
 } from "lucide-react"
@@ -36,11 +42,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { SaveShareDialog } from "@/components/notes/save-share-dialog"
 import { RevisionsDialog } from "@/components/notes/revisions-dialog"
 import { ShareLinksDialog } from "@/components/notes/share-links-dialog"
+import { TocPanel } from "@/components/editor/toc-panel"
+import { TemplatesDialog } from "@/components/editor/templates-dialog"
+import { QrDialog } from "@/components/editor/qr-dialog"
+import { EditorBubbleMenu } from "@/components/editor/bubble-menu"
 import { ApiRequestError, apiFetch } from "@/lib/client/api"
 import { deriveTitleFromContent } from "@/lib/notes/title"
 import {
@@ -51,7 +63,7 @@ import {
   toPlainText,
   type ExportFormat,
 } from "@/lib/notes/serialize"
-import { clearDraft, loadDraft, saveDraft } from "@/lib/sync/drafts"
+import { clearDraft, getSetting, loadDraft, saveDraft, setSetting } from "@/lib/sync/drafts"
 
 /** When the editor has not mounted yet (SSR / first render), use these. */
 const IDLE_TOOLBAR_STATE = {
@@ -119,8 +131,30 @@ export function NoteEditor({
   const [historyOpen, setHistoryOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
+  const [tocOpen, setTocOpen] = useState(false)
+  const [templatesOpen, setTemplatesOpen] = useState(false)
+  const [qrOpen, setQrOpen] = useState(false)
+  const [zenMode, setZenMode] = useState(false)
+  // Word target (SPEC §6): 0 = no goal. Persisted in IndexedDB.
+  const [wordTarget, setWordTarget] = useState(0)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Load the persisted word target once.
+  useEffect(() => {
+    getSetting<number>("word-target")
+      .then((value) => {
+        if (typeof value === "number" && value >= 0) {
+          setWordTarget(value)
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  function changeWordTarget(value: number) {
+    setWordTarget(value)
+    setSetting("word-target", value).catch(() => {})
+  }
 
   const isCreateMode = !savedPublicId
 
@@ -259,6 +293,44 @@ export function NoteEditor({
     return () => window.removeEventListener("keydown", onKeyDown)
   }, [openSaveDialog])
 
+  // Assign stable ids to headings so the outline's anchor links work.
+  useEffect(() => {
+    if (!editor) {
+      return
+    }
+    const applyIds = () => {
+      const dom = editor.view.dom as HTMLElement
+      const headings = dom.querySelectorAll("h1,h2,h3,h4,h5,h6")
+      headings.forEach((heading, index) => {
+        const slug =
+          (heading.textContent ?? "")
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-+|-+$/g, "") || `heading-${index + 1}`
+        heading.id = `${slug}-${index + 1}`
+      })
+    }
+    applyIds()
+    editor.on("update", applyIds)
+    return () => {
+      editor.off("update", applyIds)
+    }
+  }, [editor])
+
+  // Zen mode exits on Esc (SPEC §6).
+  useEffect(() => {
+    if (!zenMode) {
+      return
+    }
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setZenMode(false)
+      }
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [zenMode])
+
   function handleSaved(newPublicId: string, title: string) {
     setSavedPublicId(newPublicId)
     setSavedTitle(title)
@@ -333,8 +405,19 @@ export function NoteEditor({
     }
   }
 
+  const shareUrl =
+    savedPublicId && typeof window !== "undefined"
+      ? `${window.location.origin}/n/${savedPublicId}`
+      : ""
+
+  const readingMinutes =
+    toolbar.words === 0 ? 0 : Math.max(1, Math.round(toolbar.words / 200))
+  const targetProgress =
+    wordTarget > 0 ? Math.min(100, Math.round((toolbar.words / wordTarget) * 100)) : 0
+
   return (
     <div className="flex min-h-svh flex-col">
+      {!zenMode ? (
       <header className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b bg-background/80 px-4 py-2 backdrop-blur-md">
         <Link
           href="/"
@@ -366,8 +449,44 @@ export function NoteEditor({
                 <Link2 className="size-4" aria-hidden />
                 Share
               </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={!shareUrl}
+                aria-label="Show QR code"
+                onClick={() => setQrOpen(true)}
+              >
+                <QrCode className="size-4" aria-hidden />
+                QR
+              </Button>
             </>
           ) : null}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setTocOpen((open) => !open)}
+            aria-pressed={tocOpen}
+          >
+            <ListTree className="size-4" aria-hidden />
+            Outline
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setTemplatesOpen(true)}
+          >
+            <LayoutTemplate className="size-4" aria-hidden />
+            Templates
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            aria-label="Enter zen mode"
+            onClick={() => setZenMode(true)}
+          >
+            <Maximize className="size-4" aria-hidden />
+            Zen
+          </Button>
           <Button
             variant="ghost"
             size="sm"
@@ -410,13 +529,14 @@ export function NoteEditor({
           <ThemeToggle />
         </div>
       </header>
+      ) : null}
 
-      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 py-6">
-        <div
-          role="toolbar"
-          aria-label="Formatting"
-          className="mb-4 flex flex-wrap items-center gap-1 rounded-lg border bg-card p-1"
-        >
+      {!zenMode ? (
+      <div
+        role="toolbar"
+        aria-label="Formatting"
+        className="mx-auto mb-4 mt-4 flex w-full max-w-3xl flex-wrap items-center gap-1 rounded-lg border bg-card p-1 px-4"
+      >
           <ToolbarButton
             label="Undo"
             onClick={() => editor?.chain().focus().undo().run()}
@@ -524,9 +644,97 @@ export function NoteEditor({
             <Code className="size-4 rotate-90" />
           </ToolbarButton>
         </div>
+        ) : null}
 
-        <EditorContent editor={editor} className="flex-1" />
-      </div>
+        <div className="relative mx-auto flex w-full max-w-3xl flex-1 flex-col px-4">
+          {editor ? <EditorBubbleMenu editor={editor} /> : null}
+          <EditorContent editor={editor} className="flex-1" />
+
+          {/* Word target + reading time (SPEC §6) */}
+          <div className="sticky bottom-0 mt-6 flex flex-wrap items-center gap-3 border-t bg-background/80 py-2 text-xs text-muted-foreground backdrop-blur-md">
+            <p className="flex items-center gap-1.5" aria-live="polite">
+              <Target className="size-3.5" aria-hidden />
+              {toolbar.words} words
+              {readingMinutes > 0 ? ` · ~${readingMinutes} min read` : ""}
+            </p>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="word-target" className="text-xs">
+                Target
+              </Label>
+              <Input
+                id="word-target"
+                type="number"
+                min={0}
+                max={500000}
+                value={wordTarget}
+                onChange={(event) =>
+                  changeWordTarget(
+                    Math.max(0, Math.min(500000, Number(event.target.value) || 0))
+                  )
+                }
+                className="h-6 w-20 text-xs"
+              />
+            </div>
+            {wordTarget > 0 ? (
+              <div
+                className="flex min-w-40 flex-1 items-center gap-2"
+                role="progressbar"
+                aria-valuenow={targetProgress}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label="Progress toward word target"
+              >
+                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full rounded-full bg-primary transition-all"
+                    style={{ width: `${targetProgress}%` }}
+                  />
+                </div>
+                <span>{targetProgress}%</span>
+              </div>
+            ) : null}
+            {zenMode ? (
+              <Button
+                variant="ghost"
+                size="xs"
+                className="ml-auto"
+                onClick={() => setZenMode(false)}
+              >
+                <Minimize className="size-3.5" aria-hidden />
+                Exit zen (Esc)
+              </Button>
+            ) : null}
+          </div>
+        </div>
+
+      {/* Outline / TOC sidebar (SPEC §6) */}
+      {tocOpen && !zenMode ? (
+        <aside
+          aria-label="Document outline"
+          className="fixed right-0 top-14 z-10 hidden max-h-[calc(100svh-6rem)] w-64 overflow-y-auto rounded-l-xl border bg-card shadow-lg lg:block"
+        >
+          <TocPanel
+            content={editor?.getJSON() ?? null}
+            onJump={(domIndex) => {
+              const headings = editor?.view.dom.querySelectorAll(
+                "h1,h2,h3,h4,h5,h6"
+              )
+              headings?.[domIndex]?.scrollIntoView({ behavior: "smooth", block: "start" })
+            }}
+            onCopyAnchor={(heading) => {
+              const headings = editor?.view.dom.querySelectorAll(
+                "h1,h2,h3,h4,h5,h6"
+              )
+              const target = headings?.[heading.domIndex]
+              const anchor = target?.id || `heading-${heading.domIndex + 1}`
+              void navigator.clipboard.writeText(
+                `${window.location.origin}${window.location.pathname}#${anchor}`
+              )
+              toast.success("Heading link copied.")
+            }}
+          />
+        </aside>
+      ) : null}
 
       <SaveShareDialog
         key={dialogSession}
@@ -559,6 +767,24 @@ export function NoteEditor({
           onOpenChange={setShareOpen}
         />
       ) : null}
+
+      <TemplatesDialog
+        open={templatesOpen}
+        onOpenChange={setTemplatesOpen}
+        onApply={(template) => {
+          editor?.commands.setContent(template.content as JSONContent)
+          if (!isCreateMode) {
+            setSavedTitle(template.name)
+          }
+          toast.success(`Template applied: ${template.name}.`)
+        }}
+      />
+
+      <QrDialog
+        open={qrOpen}
+        onOpenChange={setQrOpen}
+        url={shareUrl}
+      />
 
       <Dialog open={exportOpen} onOpenChange={setExportOpen}>
         <DialogContent className="sm:max-w-sm">

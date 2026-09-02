@@ -21,6 +21,19 @@ const createdUserIds: string[] = []
 
 let rpcsAvailable: boolean | null = null
 
+// Auth endpoints are heavily rate-limited: memoize one "owner" and one
+// "other" test user per file instead of creating fresh users per test.
+const testUsers = new Map<string, { userId: string; client: SupabaseClient<Database> }>()
+async function getUser(role: "owner" | "other") {
+  const cached = testUsers.get(role)
+  if (cached) {
+    return cached
+  }
+  const created = await createSignedInUser()
+  testUsers.set(role, created)
+  return created
+}
+
 function testEmail(): string {
   return `phase3-${randomBytes(6).toString("hex")}@opennotepad.test`
 }
@@ -94,7 +107,7 @@ beforeAll(() => {
 d("create_user_note RPC", () => {
   it("creates a note owned by the signed-in user", async (ctx) => {
     await ensureMigrated(ctx)
-    const { userId, client } = await createSignedInUser()
+    const { userId, client } = await getUser("owner")
 
     const { data: publicId, error } = await client.rpc("create_user_note", {
       p_title: "Owned note",
@@ -153,7 +166,7 @@ d("claim_note RPC", () => {
     expect(createError).toBeNull()
     createdPublicIds.push(publicId as string)
 
-    const { userId, client } = await createSignedInUser()
+    const { userId, client } = await getUser("owner")
 
     const { data: claimed } = await client.rpc("claim_note", {
       p_public_id: publicId as string,
@@ -194,7 +207,7 @@ d("claim_note RPC", () => {
     })
     createdPublicIds.push(publicId as string)
 
-    const { client } = await createSignedInUser()
+    const { client } = await getUser("owner")
     const { data } = await client.rpc("claim_note", {
       p_public_id: publicId as string,
       p_code: "definitely-wrong-code",
@@ -215,7 +228,7 @@ d("claim_note RPC", () => {
     })
     createdPublicIds.push(publicId as string)
 
-    const { client } = await createSignedInUser()
+    const { client } = await getUser("owner")
     for (let attempt = 0; attempt < 8; attempt += 1) {
       const { data } = await client.rpc("claim_note", {
         p_public_id: publicId as string,
@@ -244,14 +257,14 @@ d("claim_note RPC", () => {
     })
     createdPublicIds.push(publicId as string)
 
-    const { client: ownerClient } = await createSignedInUser()
+    const { client: ownerClient } = await getUser("owner")
     const { data: firstClaim } = await ownerClient.rpc("claim_note", {
       p_public_id: publicId as string,
       p_code: code,
     })
     expect((firstClaim as { status: string }).status).toBe("ok")
 
-    const { client: otherClient } = await createSignedInUser()
+    const { client: otherClient } = await getUser("other")
     const { data: secondClaim } = await otherClient.rpc("claim_note", {
       p_public_id: publicId as string,
       p_code: code,
@@ -263,7 +276,7 @@ d("claim_note RPC", () => {
 d("owner RLS grants", () => {
   it("blocks cross-owner updates between authenticated users", async (ctx) => {
     await ensureMigrated(ctx)
-    const { client: ownerClient } = await createSignedInUser()
+    const { client: ownerClient } = await getUser("owner")
     const { data: ownedId } = await ownerClient.rpc("create_user_note", {
       p_title: "do not touch",
       p_content: { type: "doc", content: [] },
@@ -273,7 +286,7 @@ d("owner RLS grants", () => {
     })
     createdPublicIds.push(ownedId as string)
 
-    const { client: otherClient } = await createSignedInUser()
+    const { client: otherClient } = await getUser("other")
     // RLS notes_update_own scopes the UPDATE to zero rows — no error, but
     // nothing changes either.
     const { error } = await otherClient
@@ -292,7 +305,7 @@ d("owner RLS grants", () => {
 
   it("blocks cross-owner deletes between authenticated users", async (ctx) => {
     await ensureMigrated(ctx)
-    const { client: ownerClient } = await createSignedInUser()
+    const { client: ownerClient } = await getUser("owner")
     const { data: ownedId } = await ownerClient.rpc("create_user_note", {
       p_title: "still here",
       p_content: { type: "doc", content: [] },
@@ -302,7 +315,7 @@ d("owner RLS grants", () => {
     })
     createdPublicIds.push(ownedId as string)
 
-    const { client: otherClient } = await createSignedInUser()
+    const { client: otherClient } = await getUser("other")
     const { error } = await otherClient
       .from("notes")
       .delete()

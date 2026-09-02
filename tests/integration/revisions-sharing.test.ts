@@ -20,6 +20,19 @@ const createdUserIds: string[] = []
 
 let rpcsAvailable: boolean | null = null
 
+// Auth endpoints are heavily rate-limited: memoize one "owner" and one
+// "other" test user per file instead of creating fresh users per test.
+const testUsers = new Map<string, { userId: string; client: SupabaseClient<Database> }>()
+async function getUser(role: "owner" | "other") {
+  const cached = testUsers.get(role)
+  if (cached) {
+    return cached
+  }
+  const created = await createSignedInUser()
+  testUsers.set(role, created)
+  return created
+}
+
 async function ensureMigrated(ctx: TestContext): Promise<void> {
   if (rpcsAvailable === null) {
     const { error } = await anon.rpc("get_public_note", {
@@ -103,7 +116,7 @@ beforeAll(() => {
 d("restore_revision RPC", () => {
   it("rolls content back and records the rollback as a new revision", async (ctx) => {
     await ensureMigrated(ctx)
-    const { client } = await createSignedInUser()
+    const { client } = await getUser("owner")
     const publicId = await createOwnedNote(client, "original")
 
     const { data: rev1 } = await client.rpc("save_note", {
@@ -138,7 +151,8 @@ d("restore_revision RPC", () => {
     expect(note?.title).toBe("v1")
     expect(note?.revision_no).toBe(3)
 
-    // The rollback itself is revision #3 in history.
+    // Revisions exist only for saves: 1 and 2 from the saves above, plus
+    // the rollback snapshot itself as revision #3.
     const { data: revisions } = await client
       .from("note_revisions")
       .select("revision_no, title")
@@ -146,14 +160,14 @@ d("restore_revision RPC", () => {
     const numbers = (revisions ?? []).map(
       (r: { revision_no: number }) => r.revision_no
     )
-    expect(numbers).toEqual([0, 1, 2, 3])
+    expect(numbers).toEqual([1, 2, 3])
   })
 
   it("refuses a non-owner", async (ctx) => {
     await ensureMigrated(ctx)
-    const { client: ownerClient } = await createSignedInUser()
+    const { client: ownerClient } = await getUser("owner")
     const publicId = await createOwnedNote(ownerClient, "not yours")
-    const { client: otherClient } = await createSignedInUser()
+    const { client: otherClient } = await getUser("other")
     const { error } = await otherClient.rpc("restore_revision", {
       p_public_id: publicId,
       p_revision_no: 0,
@@ -163,7 +177,7 @@ d("restore_revision RPC", () => {
 
   it("refuses an unknown revision", async (ctx) => {
     await ensureMigrated(ctx)
-    const { client } = await createSignedInUser()
+    const { client } = await getUser("owner")
     const publicId = await createOwnedNote(client, "no such revision")
     const { error } = await client.rpc("restore_revision", {
       p_public_id: publicId,
@@ -176,7 +190,7 @@ d("restore_revision RPC", () => {
 d("get_public_note RPC", () => {
   it("returns ok for a public note", async (ctx) => {
     await ensureMigrated(ctx)
-    const { client } = await createSignedInUser()
+    const { client } = await getUser("owner")
     const publicId = await createOwnedNote(client, "public probe")
     const { data } = await anon.rpc("get_public_note", {
       p_public_id: publicId,
@@ -188,7 +202,7 @@ d("get_public_note RPC", () => {
 
   it("reports expired for an expired public note", async (ctx) => {
     await ensureMigrated(ctx)
-    const { client } = await createSignedInUser()
+    const { client } = await getUser("owner")
     const publicId = await createOwnedNote(client, "expiring probe")
     await service!
       .from("notes")
@@ -202,7 +216,7 @@ d("get_public_note RPC", () => {
 
   it("hides private notes as not_found", async (ctx) => {
     await ensureMigrated(ctx)
-    const { client } = await createSignedInUser()
+    const { client } = await getUser("owner")
     const publicId = await createOwnedNote(client, "private probe", "private")
     const { data } = await anon.rpc("get_public_note", {
       p_public_id: publicId,
@@ -214,7 +228,7 @@ d("get_public_note RPC", () => {
 d("share links", () => {
   it("mints a view share that redeems without an edit session", async (ctx) => {
     await ensureMigrated(ctx)
-    const { client } = await createSignedInUser()
+    const { client } = await getUser("owner")
     const publicId = await createOwnedNote(client, "share view")
 
     const { data: minted, error: mintError } = await client.rpc(
@@ -246,7 +260,7 @@ d("share links", () => {
 
   it("mints an edit share whose session authorizes a save", async (ctx) => {
     await ensureMigrated(ctx)
-    const { client: ownerClient } = await createSignedInUser()
+    const { client: ownerClient } = await getUser("owner")
     const publicId = await createOwnedNote(ownerClient, "share edit")
 
     const { data: minted } = await ownerClient.rpc("create_share_link", {
@@ -278,7 +292,7 @@ d("share links", () => {
 
   it("refuses bad tokens and revokes existing ones", async (ctx) => {
     await ensureMigrated(ctx)
-    const { client } = await createSignedInUser()
+    const { client } = await getUser("owner")
     const publicId = await createOwnedNote(client, "revoke target")
 
     const { data: minted } = await client.rpc("create_share_link", {
@@ -320,7 +334,7 @@ d("share links", () => {
 
   it("rejects invalid permission, past expiry, and non-owners", async (ctx) => {
     await ensureMigrated(ctx)
-    const { client } = await createSignedInUser()
+    const { client } = await getUser("owner")
     const publicId = await createOwnedNote(client, "mint guards")
 
     const { error: permError } = await client.rpc("create_share_link", {
@@ -337,7 +351,7 @@ d("share links", () => {
     })
     expect(expiryError?.message).toContain("INVALID_SHARE_EXPIRY")
 
-    const { client: otherClient } = await createSignedInUser()
+    const { client: otherClient } = await getUser("other")
     const { error: ownerError } = await otherClient.rpc("create_share_link", {
       p_public_id: publicId,
       p_permission: "view",

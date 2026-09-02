@@ -21,6 +21,19 @@ const createdUserIds: string[] = []
 
 let rpcsAvailable: boolean | null = null
 
+// Auth endpoints are heavily rate-limited: memoize one "owner" and one
+// "other" test user per file instead of creating fresh users per test.
+const testUsers = new Map<string, { userId: string; client: SupabaseClient<Database> }>()
+async function getUser(role: "owner" | "other") {
+  const cached = testUsers.get(role)
+  if (cached) {
+    return cached
+  }
+  const created = await createSignedInUser()
+  testUsers.set(role, created)
+  return created
+}
+
 async function ensureMigrated(ctx: TestContext): Promise<void> {
   if (rpcsAvailable === null) {
     const { error } = await anon.rpc("get_note_by_slug", { p_slug: "probe" })
@@ -119,7 +132,7 @@ describe("slug validation helpers", () => {
 d("claim_slug RPC", () => {
   it("claims a slug, re-claims it, and exposes the public note", async (ctx) => {
     await ensureMigrated(ctx)
-    const { client } = await createSignedInUser()
+    const { client } = await getUser("owner")
     const publicId = await createOwnedNote(client)
     const slug = `note-${randomBytes(4).toString("hex")}`
 
@@ -153,7 +166,7 @@ d("claim_slug RPC", () => {
 
   it("rejects reserved, malformed, and taken slugs", async (ctx) => {
     await ensureMigrated(ctx)
-    const { client } = await createSignedInUser()
+    const { client } = await getUser("owner")
     const publicId = await createOwnedNote(client)
 
     const { data: reserved } = await client.rpc("claim_slug", {
@@ -169,7 +182,7 @@ d("claim_slug RPC", () => {
     expect((malformed as { status: string }).status).toBe("invalid_slug")
 
     const slug = `taken-${randomBytes(4).toString("hex")}`
-    const { client: otherOwner } = await createSignedInUser()
+    const { client: otherOwner } = await getUser("other")
     const otherNote = await createOwnedNote(otherOwner)
     const { data: firstClaim } = await otherOwner.rpc("claim_slug", {
       p_public_id: otherNote,
@@ -186,9 +199,9 @@ d("claim_slug RPC", () => {
 
   it("refuses non-owners and reports private notes as not_found", async (ctx) => {
     await ensureMigrated(ctx)
-    const { client: ownerClient } = await createSignedInUser()
+    const { client: ownerClient } = await getUser("owner")
     const publicId = await createOwnedNote(ownerClient)
-    const { client: otherClient } = await createSignedInUser()
+    const { client: otherClient } = await getUser("other")
 
     const { data: hijack } = await otherClient.rpc("claim_slug", {
       p_public_id: publicId,

@@ -39,3 +39,13 @@ export async function loadDraft(): Promise<StoredDraft | undefined> {
 export async function clearDraft(): Promise<void> {
   await db.drafts.delete(DRAFT_KEY)
 }
+
+/** Generic key/value settings persisted in IndexedDB (never localStorage). */
+export async function getSetting<T>(key: string): Promise<T | undefined> {
+  const row = await db.drafts.get(key)
+  return row?.content as T | undefined
+}
+
+export async function setSetting(key: string, value: unknown): Promise<void> {
+  await db.drafts.put({ key, content: value, updatedAt: Date.now() })
+}

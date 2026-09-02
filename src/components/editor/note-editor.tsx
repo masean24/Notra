@@ -66,6 +66,7 @@ import {
   type ExportFormat,
 } from "@/lib/notes/serialize"
 import { clearDraft, getSetting, loadDraft, saveDraft, setSetting } from "@/lib/sync/drafts"
+import { setEditorCommands } from "@/components/palette/registry"
 import {
   deleteConflict,
   enqueueOp,
@@ -397,6 +398,58 @@ export function NoteEditor({
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
   }, [zenMode])
+
+  // Extend the global command palette with editor-scoped commands (SPEC §7)
+  // for as long as this editor is mounted.
+  useEffect(() => {
+    setEditorCommands([
+      {
+        id: "editor-ai",
+        label: "Open AI assistant",
+        group: "Note",
+        icon: null,
+        action: () => setAiOpen(true),
+      },
+      {
+        id: "editor-history",
+        label: "Open revision history",
+        group: "Note",
+        icon: null,
+        action: () => setHistoryOpen(true),
+      },
+      {
+        id: "editor-templates",
+        label: "Open template library",
+        group: "Note",
+        icon: null,
+        action: () => setTemplatesOpen(true),
+      },
+      {
+        id: "editor-toc",
+        label: "Toggle outline",
+        group: "Note",
+        icon: null,
+        action: () => setTocOpen((current) => !current),
+      },
+      {
+        id: "editor-export",
+        label: "Export note",
+        group: "Note",
+        icon: null,
+        action: () => setExportOpen(true),
+      },
+      {
+        id: "editor-import",
+        label: "Import a file",
+        group: "Note",
+        icon: null,
+        action: () => fileInputRef.current?.click(),
+      },
+    ])
+    return () => {
+      setEditorCommands(null)
+    }
+  }, [])
 
   function handleSaved(newPublicId: string, title: string) {
     setSavedPublicId(newPublicId)

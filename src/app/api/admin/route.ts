@@ -3,6 +3,7 @@ import { type NextRequest } from "next/server"
 import { errorResponse, successResponse } from "@/lib/api/response"
 import { getAdminUser } from "@/lib/admin/guard"
 import { assertCsrf } from "@/lib/security/csrf"
+import { consumeRateLimit, getClientIp, hashIp } from "@/lib/rate-limit"
 import { createClient } from "@/lib/supabase/server"
 
 /**
@@ -107,6 +108,17 @@ export async function POST(request: NextRequest) {
     return denied
   }
 
+  const supabase = await createClient()
+  const allowed = await consumeRateLimit(
+    supabase,
+    `admin-action:${hashIp(getClientIp(request))}`,
+    60,
+    5 * 60
+  )
+  if (!allowed) {
+    return errorResponse(429, "RATE_LIMITED", "Too many actions. Slow down.")
+  }
+
   let payload: unknown
   try {
     payload = await request.json()
@@ -127,7 +139,6 @@ export async function POST(request: NextRequest) {
     return errorResponse(400, "VALIDATION_ERROR", "Missing deletion flag.")
   }
 
-  const supabase = await createClient()
   const { data, error } =
     body.action === "set_note_deleted"
       ? await supabase.rpc("admin_set_note_deleted", {

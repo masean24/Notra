@@ -41,6 +41,11 @@ export function mapRpcError(error: unknown): NextResponse {
     case "NOTE_NOT_FOUND":
       // Same shape as a missing note: private notes are indistinguishable.
       return errorResponse(404, "NOT_FOUND", "Note not found.")
+    case "REVISION_NOT_FOUND":
+      return errorResponse(404, "NOT_FOUND", "Revision not found.")
+    case "INVALID_SHARE_PERMISSION":
+    case "INVALID_SHARE_EXPIRY":
+      return errorResponse(400, code, "The share link request is invalid.")
     case "NOTE_EXPIRED":
       return errorResponse(410, "NOTE_EXPIRED", "This note has expired.")
     case "NOTE_READ_ONLY":

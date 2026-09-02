@@ -176,6 +176,34 @@ export type Database = {
         Args: { p_key: string; p_limit: number; p_window_seconds: number }
         Returns: boolean
       }
+      restore_revision: {
+        Args: { p_public_id: string; p_revision_no: number }
+        Returns: number
+      }
+      create_share_link: {
+        Args: {
+          p_public_id: string
+          p_permission: string
+          p_expires_at: string
+        }
+        Returns: unknown
+      }
+      list_share_links: {
+        Args: { p_public_id: string }
+        Returns: unknown
+      }
+      revoke_share_link: {
+        Args: { p_public_id: string; p_share_id: string }
+        Returns: boolean
+      }
+      get_public_note: {
+        Args: { p_public_id: string }
+        Returns: unknown
+      }
+      redeem_share: {
+        Args: { p_token: string; p_session_token: string }
+        Returns: unknown
+      }
     }
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>

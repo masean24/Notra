@@ -3,6 +3,7 @@ import { cookies } from "next/headers"
 import { notFound } from "next/navigation"
 
 import { NoteEditor } from "@/components/editor/note-editor"
+import { ExpiredNote } from "@/components/notes/expired-note"
 import { NoteView } from "@/components/notes/note-viewer"
 import { editSessionCookieName, hasEditSession } from "@/lib/notes/sessions"
 import { createClient } from "@/lib/supabase/server"
@@ -54,20 +55,40 @@ export default async function PublicNotePage({
 
   const cookieStore = await cookies()
   const token = cookieStore.get(editSessionCookieName(publicId))?.value
-  const editable = await hasEditSession(
-    supabase,
-    publicId,
-    token
+
+  // Non-owner: resolve through the get_public_note RPC so an expired public
+  // note shows a real expiration page while private/missing stay a plain 404.
+  const { data: rpcPayload, error: rpcError } = await supabase.rpc(
+    "get_public_note",
+    { p_public_id: publicId }
   )
+  const payload = rpcPayload as
+    | {
+        status: "ok" | "expired" | "not_found"
+        title?: string
+        content?: unknown
+        content_format?: string
+        updated_at?: string
+      }
+    | undefined
+
+  if (rpcError || !payload || payload.status === "not_found") {
+    notFound()
+  }
+  if (payload.status === "expired") {
+    return <ExpiredNote />
+  }
+
+  const editable = await hasEditSession(supabase, publicId, token)
 
   return (
     <NoteView
       note={{
-        public_id: note.public_id,
-        title: note.title,
-        content: note.content,
-        content_format: note.content_format,
-        updated_at: note.updated_at,
+        public_id: publicId,
+        title: payload.title ?? "",
+        content: payload.content,
+        content_format: payload.content_format ?? "tiptap_json",
+        updated_at: payload.updated_at ?? new Date().toISOString(),
       }}
       editable={editable}
     />

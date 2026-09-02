@@ -92,3 +92,29 @@ export const updateNoteSchema = z
   )
 
 export type UpdateNoteInput = z.infer<typeof updateNoteSchema>
+
+export const SHARE_PERMISSIONS = ["view", "edit"] as const
+export type SharePermission = (typeof SHARE_PERMISSIONS)[number]
+
+export const createShareSchema = z.object({
+  permission: z.enum(SHARE_PERMISSIONS),
+  /** Max TTL: 30 days, must be in the future. */
+  expiresAt: z
+    .iso.datetime({ offset: true })
+    .refine((value) => new Date(value).getTime() > Date.now(), "Expiration must be in the future.")
+    .refine(
+      (value) =>
+        new Date(value).getTime() <= Date.now() + 30 * 24 * 60 * 60 * 1000,
+      "Share links can last at most 30 days."
+    ),
+})
+
+export type CreateShareInput = z.infer<typeof createShareSchema>
+
+export const revokeShareSchema = z.object({
+  shareId: z.uuid("A valid share id is required."),
+})
+
+export const restoreRevisionSchema = z.object({
+  revisionNo: z.number().int().positive(),
+})

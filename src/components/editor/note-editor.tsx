@@ -6,10 +6,13 @@ import { toast } from "sonner"
 import {
   Bold,
   Code,
+  Download,
   Heading1,
   Heading2,
   Heading3,
+  History,
   Italic,
+  Link2,
   List,
   ListOrdered,
   Lock,
@@ -19,17 +22,35 @@ import {
   Save,
   Strikethrough,
   Undo2,
+  Upload,
 } from "lucide-react"
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react"
 import type { JSONContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { SaveShareDialog } from "@/components/notes/save-share-dialog"
+import { RevisionsDialog } from "@/components/notes/revisions-dialog"
+import { ShareLinksDialog } from "@/components/notes/share-links-dialog"
 import { ApiRequestError, apiFetch } from "@/lib/client/api"
 import { deriveTitleFromContent } from "@/lib/notes/title"
+import {
+  parseImportFile,
+  toJsonBackup,
+  toHtml,
+  toMarkdown,
+  toPlainText,
+  type ExportFormat,
+} from "@/lib/notes/serialize"
 import { clearDraft, loadDraft, saveDraft } from "@/lib/sync/drafts"
 
 /** When the editor has not mounted yet (SSR / first render), use these. */
@@ -95,6 +116,10 @@ export function NoteEditor({
   // Bumped each time the dialog opens so it remounts with fresh state.
   const [dialogSession, setDialogSession] = useState(0)
   const [saving, setSaving] = useState(false)
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
+  const [exportOpen, setExportOpen] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
   const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const isCreateMode = !savedPublicId
@@ -241,6 +266,73 @@ export function NoteEditor({
     toast.success("Note saved.")
   }
 
+  const currentTitle = savedTitle || (editor ? deriveTitleFromContent(editor.getJSON()) : "")
+
+  function doExport(format: ExportFormat) {
+    if (!editor) {
+      return
+    }
+    const doc = editor.getJSON()
+    let body: string
+    let mime: string
+    switch (format) {
+      case "txt":
+        body = toPlainText(doc)
+        mime = "text/plain;charset=utf-8"
+        break
+      case "md":
+        body = toMarkdown(doc)
+        mime = "text/markdown;charset=utf-8"
+        break
+      case "html":
+        body = `<!doctype html><meta charset="utf-8"><title>${currentTitle || "Untitled note"}</title>${toHtml(doc)}`
+        mime = "text/html;charset=utf-8"
+        break
+      case "json":
+        body = toJsonBackup(currentTitle, doc)
+        mime = "application/json"
+        break
+    }
+    const blob = new Blob([body], { type: mime })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement("a")
+    anchor.href = url
+    anchor.download = `${(currentTitle || "untitled").replace(/[^\w-]+/g, "-").toLowerCase()}.${format}`
+    anchor.click()
+    URL.revokeObjectURL(url)
+    setExportOpen(false)
+    toast.success(`Exported as .${format}.`)
+  }
+
+  async function handleImportFile(file: File) {
+    if (!editor) {
+      return
+    }
+    if (file.size > 2_000_000) {
+      toast.error("Import files are limited to 2 MB.")
+      return
+    }
+    try {
+      const text = await file.text()
+      const imported = parseImportFile(file.name, text)
+      editor.commands.setContent((imported.content ?? "") as JSONContent)
+      if (imported.title && !isCreateMode) {
+        setSavedTitle(imported.title)
+      }
+      toast.success(
+        `Imported ${file.name}. Review the content, then save to keep it.`
+      )
+    } catch (error) {
+      if (error instanceof Error && error.message === "IMPORT_INVALID_JSON") {
+        toast.error(
+          "That JSON file is not a valid OpenNotepad backup. Expected .md, .txt, or an exported .json."
+        )
+      } else {
+        toast.error("Could not import that file.")
+      }
+    }
+  }
+
   return (
     <div className="flex min-h-svh flex-col">
       <header className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b bg-background/80 px-4 py-2 backdrop-blur-md">
@@ -256,6 +348,55 @@ export function NoteEditor({
           <p className="text-xs text-muted-foreground" aria-live="polite">
             {toolbar.words} words · {toolbar.characters} characters
           </p>
+          {savedPublicId ? (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setHistoryOpen(true)}
+              >
+                <History className="size-4" aria-hidden />
+                History
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShareOpen(true)}
+              >
+                <Link2 className="size-4" aria-hidden />
+                Share
+              </Button>
+            </>
+          ) : null}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setExportOpen(true)}
+          >
+            <Download className="size-4" aria-hidden />
+            Export
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Upload className="size-4" aria-hidden />
+            Import
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".md,.txt,.json"
+            className="hidden"
+            onChange={(event) => {
+              const file = event.target.files?.[0]
+              if (file) {
+                void handleImportFile(file)
+              }
+              event.target.value = ""
+            }}
+          />
           {onRevoke ? (
             <Button variant="ghost" size="sm" onClick={onRevoke}>
               <Lock className="size-4" aria-hidden />
@@ -398,6 +539,52 @@ export function NoteEditor({
         onSaved={handleSaved}
         isAuthenticated={isAuthenticated}
       />
+
+      {savedPublicId ? (
+        <RevisionsDialog
+          publicId={savedPublicId}
+          open={historyOpen}
+          onOpenChange={setHistoryOpen}
+          currentText={editor?.getText() ?? ""}
+          onRestored={(content) => {
+            editor?.commands.setContent((content ?? "") as JSONContent)
+          }}
+        />
+      ) : null}
+
+      {savedPublicId ? (
+        <ShareLinksDialog
+          publicId={savedPublicId}
+          open={shareOpen}
+          onOpenChange={setShareOpen}
+        />
+      ) : null}
+
+      <Dialog open={exportOpen} onOpenChange={setExportOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Export note</DialogTitle>
+            <DialogDescription>
+              Download the current content. JSON includes the full structured
+              backup and can be re-imported later.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-2">
+            <Button variant="outline" onClick={() => doExport("txt")}>
+              Plain text (.txt)
+            </Button>
+            <Button variant="outline" onClick={() => doExport("md")}>
+              Markdown (.md)
+            </Button>
+            <Button variant="outline" onClick={() => doExport("html")}>
+              Web page (.html)
+            </Button>
+            <Button variant="outline" onClick={() => doExport("json")}>
+              Backup (.json)
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

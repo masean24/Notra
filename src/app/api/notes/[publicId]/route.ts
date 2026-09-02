@@ -5,12 +5,22 @@ import { assertCsrf } from "@/lib/security/csrf"
 import { createClient } from "@/lib/supabase/server"
 import { updateNoteSchema } from "@/lib/validation/notes"
 
-const PUBLIC_COLUMNS =
-  "public_id, title, content, content_format, visibility, editing_policy, expires_at, created_at, updated_at"
+interface PublicNotePayload {
+  status: "ok" | "expired" | "not_found"
+  expires_at?: string
+  public_id?: string
+  title?: string
+  content?: unknown
+  content_format?: string
+  created_at?: string
+  updated_at?: string
+}
 
 /**
- * Public note retrieval. Private, expired, soft-deleted, and missing notes
- * all return the same NOT_FOUND response — no existence oracle.
+ * Public note retrieval via the `get_public_note` SECURITY DEFINER RPC.
+ * Private, soft-deleted, and missing notes return the same NOT_FOUND
+ * response — no existence oracle. Expired public notes return 410 so the UI
+ * can show a real expiration page (SPEC §9/§21).
  */
 export async function GET(
   _request: NextRequest,
@@ -19,16 +29,33 @@ export async function GET(
   const { publicId } = await params
   const supabase = await createClient()
 
-  const { data, error } = await supabase
-    .from("notes")
-    .select(PUBLIC_COLUMNS)
-    .eq("public_id", publicId)
-    .maybeSingle()
+  const { data, error } = await supabase.rpc("get_public_note", {
+    p_public_id: publicId,
+  })
+  if (error) {
+    return errorResponse(
+      500,
+      "INTERNAL_ERROR",
+      "Could not load the note. Please try again."
+    )
+  }
 
-  if (error || !data) {
+  const payload = data as PublicNotePayload
+  if (payload?.status === "expired") {
+    return errorResponse(410, "NOTE_EXPIRED", "This note has expired.")
+  }
+  if (payload?.status !== "ok") {
     return errorResponse(404, "NOT_FOUND", "Note not found.")
   }
-  return successResponse(data)
+
+  return successResponse({
+    public_id: payload.public_id,
+    title: payload.title,
+    content: payload.content,
+    content_format: payload.content_format,
+    created_at: payload.created_at,
+    updated_at: payload.updated_at,
+  })
 }
 
 /**

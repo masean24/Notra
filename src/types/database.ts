@@ -256,6 +256,10 @@ export type Database = {
         Args: Record<string, never>
         Returns: unknown
       }
+      log_admin_probe: {
+        Args: { p_ip_hash: string; p_path: string }
+        Returns: undefined
+      }
     }
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>

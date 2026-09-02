@@ -127,7 +127,10 @@ d("create_user_note RPC", () => {
       p_expires_at: null,
       p_visibility: "public",
     })
-    expect(error?.message).toContain("UNAUTHENTICATED")
+    // The migration revokes EXECUTE from anon, so Postgres blocks the call
+    // at the privilege level ("permission denied") before the function body
+    // could raise UNAUTHENTICATED. Either refusal means the call is denied.
+    expect(error?.message).toMatch(/UNAUTHENTICATED|permission denied/)
   })
 })
 

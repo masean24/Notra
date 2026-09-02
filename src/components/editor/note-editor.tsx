@@ -23,6 +23,7 @@ import {
   LayoutTemplate,
   Quote,
   QrCode,
+  Sparkles,
   Redo2,
   Save,
   Strikethrough,
@@ -46,6 +47,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { AiAssistantDialog } from "@/components/ai/ai-assistant-dialog"
 import { SaveShareDialog } from "@/components/notes/save-share-dialog"
 import { RevisionsDialog } from "@/components/notes/revisions-dialog"
 import { ShareLinksDialog } from "@/components/notes/share-links-dialog"
@@ -66,7 +68,7 @@ import {
 import { clearDraft, getSetting, loadDraft, saveDraft, setSetting } from "@/lib/sync/drafts"
 import {
   deleteConflict,
-    enqueueOp,
+  enqueueOp,
   getOpForNote,
   listConflicts,
   listOpsFifo,
@@ -151,6 +153,7 @@ export function NoteEditor({
   const [tocOpen, setTocOpen] = useState(false)
   const [templatesOpen, setTemplatesOpen] = useState(false)
   const [qrOpen, setQrOpen] = useState(false)
+  const [aiOpen, setAiOpen] = useState(false)
   const [zenMode, setZenMode] = useState(false)
   // Word target (SPEC §6): 0 = no goal. Persisted in IndexedDB.
   const [wordTarget, setWordTarget] = useState(0)
@@ -660,6 +663,14 @@ export function NoteEditor({
           <Button
             variant="ghost"
             size="sm"
+            onClick={() => setAiOpen(true)}
+          >
+            <Sparkles className="size-4" aria-hidden />
+            AI
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             aria-label="Enter zen mode"
             onClick={() => setZenMode(true)}
           >
@@ -963,6 +974,16 @@ export function NoteEditor({
         open={qrOpen}
         onOpenChange={setQrOpen}
         url={shareUrl}
+      />
+
+      <AiAssistantDialog
+        open={aiOpen}
+        onOpenChange={setAiOpen}
+        isAuthenticated={isAuthenticated}
+        contextText={editor?.getText() ?? ""}
+        onInsert={(text) => {
+          editor?.chain().focus().insertContent(text).run()
+        }}
       />
 
       <Dialog open={exportOpen} onOpenChange={setExportOpen}>

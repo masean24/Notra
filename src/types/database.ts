@@ -224,6 +224,38 @@ export type Database = {
         Args: { p_slug: string }
         Returns: unknown
       }
+      save_own_gemini_key: {
+        Args: { p_ciphertext: string }
+        Returns: unknown
+      }
+      load_own_gemini_key: {
+        Args: Record<string, never>
+        Returns: string | null
+      }
+      clear_own_gemini_key: {
+        Args: Record<string, never>
+        Returns: unknown
+      }
+      admin_list_users: {
+        Args: { p_limit?: number }
+        Returns: unknown
+      }
+      admin_list_notes: {
+        Args: { p_limit?: number }
+        Returns: unknown
+      }
+      admin_set_note_deleted: {
+        Args: { p_public_id: string; p_deleted: boolean }
+        Returns: unknown
+      }
+      admin_clear_lockout: {
+        Args: { p_public_id: string }
+        Returns: unknown
+      }
+      admin_stats: {
+        Args: Record<string, never>
+        Returns: unknown
+      }
     }
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>

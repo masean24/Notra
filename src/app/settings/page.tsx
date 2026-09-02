@@ -5,6 +5,7 @@ import { NotebookPen, Settings, UserRound } from "lucide-react"
 
 import { SignOutButton } from "@/components/auth/sign-out-button"
 import { ClaimNoteForm } from "@/components/settings/claim-note-form"
+import { GeminiKeyCard } from "@/components/settings/gemini-key-card"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -88,6 +89,8 @@ export default async function SettingsPage() {
         </Card>
 
         <ClaimNoteForm />
+
+        <GeminiKeyCard />
       </main>
     </div>
   )

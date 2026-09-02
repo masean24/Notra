@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { ArrowRight, GitBranch, NotebookPen, ShieldCheck } from "lucide-react"
+import { ArrowRight, GitBranch, NotebookPen, ShieldCheck, Sparkles } from "lucide-react"
 
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
@@ -78,6 +78,28 @@ export default function LandingPage() {
                 MIT licensed. No paywalls, no ads, no tracking. Self-host it
                 yourself.
               </p>
+            </div>
+            <div className="rounded-xl border bg-card p-6 sm:col-span-2">
+              <Sparkles
+                className="mb-3 size-5 text-muted-foreground"
+                aria-hidden
+              />
+              <h2 className="mb-1 font-semibold">AI writing help — your own key</h2>
+              <p className="mb-3 text-sm text-muted-foreground">
+                Continue writing, rewrite, summarize, or title your notes with
+                the Gemini assistant. Bring your own API key: it stays yours,
+                requests go through the app&apos;s backend only to reach
+                Google&apos;s API, and the maintainers never pay for or see your
+                usage.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                render={<Link href="/new" />}
+              >
+                Try it in the editor
+                <ArrowRight className="size-4" aria-hidden />
+              </Button>
             </div>
           </div>
 

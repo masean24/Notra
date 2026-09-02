@@ -16,6 +16,7 @@ import {
 } from "lucide-react"
 
 import { ThemeToggle } from "@/components/theme-toggle"
+import { AuthNav } from "@/components/layout/auth-nav"
 import { Button } from "@/components/ui/button"
 
 /* Landing page (SPEC §23): bento feature grid, comparison table, tech
@@ -121,12 +122,7 @@ export default function LandingPage() {
         </Link>
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <Button variant="ghost" render={<Link href="/login" />}>
-            Sign in
-          </Button>
-          <Button variant="outline" render={<Link href="/signup" />}>
-            Sign up
-          </Button>
+          <AuthNav />
         </div>
       </header>
 

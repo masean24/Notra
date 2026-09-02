@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 
+import { DEFAULT_AUTH_REDIRECT } from "@/lib/auth/redirect"
 import { createClient } from "@/lib/supabase/server"
 
 /**
@@ -15,7 +16,7 @@ export async function GET(request: Request) {
   const next =
     nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//")
       ? nextParam
-      : "/"
+      : DEFAULT_AUTH_REDIRECT
 
   if (code) {
     const supabase = await createClient()

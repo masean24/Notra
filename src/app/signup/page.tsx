@@ -67,7 +67,7 @@ export default function SignupPage() {
       }
       if (data.session) {
         // Email confirmation is disabled in this Supabase project.
-        router.push("/")
+        router.push("/dashboard")
         router.refresh()
       } else {
         setConfirmationSent(true)

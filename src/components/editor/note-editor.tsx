@@ -60,6 +60,8 @@ export interface NoteEditorProps {
   publicId?: string
   /** Show a "lock again" action that revokes the current edit session. */
   onRevoke?: () => void
+  /** Whether the visitor is signed in — owned-note saves skip edit codes. */
+  isAuthenticated?: boolean
 }
 
 /**
@@ -71,6 +73,7 @@ export function NoteEditor({
   initialContent,
   publicId,
   onRevoke,
+  isAuthenticated = false,
 }: NoteEditorProps) {
   const editor = useEditor({
     extensions: [StarterKit],
@@ -393,6 +396,7 @@ export function NoteEditor({
           editor ? deriveTitleFromContent(editor.getJSON()) : ""
         }
         onSaved={handleSaved}
+        isAuthenticated={isAuthenticated}
       />
     </div>
   )

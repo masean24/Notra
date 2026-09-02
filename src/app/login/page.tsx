@@ -16,6 +16,9 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Separator } from "@/components/ui/separator"
+import { OAuthButtons } from "@/components/auth/oauth-buttons"
+import { sanitizeNextPath } from "@/lib/auth/redirect"
 import {
   getSupabaseBrowserClient,
   isSupabaseConfigured,
@@ -59,6 +62,7 @@ function LoginForm() {
 
   const callbackFailed =
     searchParams.get("error") === "auth_callback_failed"
+  const nextPath = sanitizeNextPath(searchParams.get("next"))
 
   useEffect(() => {
     if (!configured) return
@@ -80,7 +84,7 @@ function LoginForm() {
         router.replace("/login?error=invalid_credentials")
         return
       }
-      router.push("/")
+      router.push(nextPath)
       router.refresh()
     } finally {
       setSubmitting(false)
@@ -124,6 +128,12 @@ function LoginForm() {
       ) : (
         <form onSubmit={handleSubmit}>
           <CardContent className="flex flex-col gap-4">
+            <OAuthButtons next={searchParams.get("next")} />
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <Separator className="flex-1" />
+              or continue with email
+              <Separator className="flex-1" />
+            </div>
             {callbackFailed ? (
               <p role="alert" className="text-sm text-destructive">
                 The sign-in link was invalid or has expired. Please try signing

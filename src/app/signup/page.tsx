@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Separator } from "@/components/ui/separator"
+import { OAuthButtons } from "@/components/auth/oauth-buttons"
 import {
   getSupabaseBrowserClient,
   isSupabaseConfigured,
@@ -121,6 +123,12 @@ export default function SignupPage() {
             </CardHeader>
             <form onSubmit={handleSubmit}>
               <CardContent className="flex flex-col gap-4">
+                <OAuthButtons />
+                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                  <Separator className="flex-1" />
+                  or sign up with email
+                  <Separator className="flex-1" />
+                </div>
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="email">Email</Label>
                   <Input

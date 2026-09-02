@@ -67,6 +67,8 @@ export interface SaveShareDialogProps {
   /** Preset title suggestion (derived from the document). */
   suggestedTitle: string
   onSaved: (publicId: string, savedTitle: string) => void
+  /** Signed-in visitors save to their account — no edit code needed. */
+  isAuthenticated?: boolean
 }
 
 export function SaveShareDialog({
@@ -75,10 +77,13 @@ export function SaveShareDialog({
   content,
   suggestedTitle,
   onSaved,
+  isAuthenticated = false,
 }: SaveShareDialogProps) {
   const [title, setTitle] = useState(suggestedTitle)
   const [editingPolicy, setEditingPolicy] =
-    useState<"edit_code" | "account" | "read_only">("edit_code")
+    useState<"edit_code" | "account" | "read_only">(
+      isAuthenticated ? "account" : "edit_code"
+    )
   const [codeMode, setCodeMode] = useState<"random" | "custom">("random")
   const [randomCode, setRandomCode] = useState(() => generateRandomEditCode())
   const [customCode, setCustomCode] = useState("")
@@ -102,6 +107,7 @@ export function SaveShareDialog({
         : customCode
 
   const codeValid =
+    isAuthenticated ||
     editingPolicy !== "edit_code" ||
     (effectiveEditCode !== null && isValidCustomEditCode(effectiveEditCode))
 
@@ -125,6 +131,7 @@ export function SaveShareDialog({
 
     setSubmitting(true)
     try {
+      const effectivePolicy = isAuthenticated ? "account" : editingPolicy
       const data = await apiFetch<{ publicId: string; sessionIssued: boolean }>(
         "/api/notes",
         {
@@ -133,15 +140,21 @@ export function SaveShareDialog({
             title,
             content,
             contentFormat: "tiptap_json",
-            editingPolicy,
-            editCode: editingPolicy === "edit_code" ? effectiveEditCode : undefined,
+            editingPolicy: effectivePolicy,
+            editCode:
+              !isAuthenticated && editingPolicy === "edit_code"
+                ? effectiveEditCode
+                : undefined,
             expiresAt: computeExpiresAt(expiration, customExpiration) ?? undefined,
           }),
         }
       )
       setResult({
         publicId: data.publicId,
-        editCode: editingPolicy === "edit_code" ? effectiveEditCode : null,
+        editCode:
+          !isAuthenticated && editingPolicy === "edit_code"
+            ? effectiveEditCode
+            : null,
       })
       onSaved(data.publicId, title)
     } catch (error) {
@@ -203,20 +216,29 @@ export function SaveShareDialog({
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  {editingPolicy === "account"
-                    ? "Only your account will be able to edit this note after you sign in and claim it."
-                    : "This note is permanently read-only."}
+                  {isAuthenticated
+                    ? "Saved to your account — only you can edit it. Manage this note from your dashboard."
+                    : editingPolicy === "account"
+                      ? "Only your account will be able to edit this note after you sign in and claim it."
+                      : "This note is permanently read-only."}
                 </p>
               )}
             </div>
             <DialogFooter className="mt-2 flex-row justify-between gap-2 sm:justify-between">
-              <Button
-                variant="outline"
-                render={<Link href={`/n/${result.publicId}`} />}
-              >
-                <ExternalLink className="size-4" aria-hidden />
-                Open note
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  render={<Link href={`/n/${result.publicId}`} />}
+                >
+                  <ExternalLink className="size-4" aria-hidden />
+                  Open note
+                </Button>
+                {isAuthenticated ? (
+                  <Button variant="ghost" render={<Link href="/dashboard" />}>
+                    Dashboard
+                  </Button>
+                ) : null}
+              </div>
               <Button onClick={() => onOpenChange(false)}>Done</Button>
             </DialogFooter>
           </>
@@ -225,7 +247,9 @@ export function SaveShareDialog({
             <DialogHeader>
               <DialogTitle>Save &amp; Share</DialogTitle>
               <DialogDescription>
-                Save this note and get a shareable link. No account needed.
+                {isAuthenticated
+                  ? "Save this note to your account and get a shareable link."
+                  : "Save this note and get a shareable link. No account needed."}
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -240,52 +264,60 @@ export function SaveShareDialog({
                 />
               </div>
 
-              <div className="flex flex-col gap-2">
-                <Label>Editing allowed by</Label>
-                <RadioGroup
-                  value={editingPolicy}
-                  onValueChange={(value) =>
-                    setEditingPolicy(value as typeof editingPolicy)
-                  }
-                  className="gap-2"
-                >
-                  <label className="flex items-start gap-2 rounded-lg border p-3 has-[[data-state=checked]]:border-ring">
-                    <RadioGroupItem value="edit_code" className="mt-0.5" />
-                    <span>
-                      <span className="block text-sm font-medium">
-                        Anyone with the edit code
-                      </span>
-                      <span className="block text-xs text-muted-foreground">
-                        Share the passcode with people who should edit.
-                      </span>
-                    </span>
-                  </label>
-                  <label className="flex items-start gap-2 rounded-lg border p-3 has-[[data-state=checked]]:border-ring">
-                    <RadioGroupItem value="account" className="mt-0.5" />
-                    <span>
-                      <span className="block text-sm font-medium">
-                        Only my account
-                      </span>
-                      <span className="block text-xs text-muted-foreground">
-                        Locked until you claim this note while signed in.
-                      </span>
-                    </span>
-                  </label>
-                  <label className="flex items-start gap-2 rounded-lg border p-3 has-[[data-state=checked]]:border-ring">
-                    <RadioGroupItem value="read_only" className="mt-0.5" />
-                    <span>
-                      <span className="block text-sm font-medium">
-                        Read-only forever
-                      </span>
-                      <span className="block text-xs text-muted-foreground">
-                        Permanently locked. Nobody can edit it again.
-                      </span>
-                    </span>
-                  </label>
-                </RadioGroup>
-              </div>
+              {isAuthenticated ? (
+                <p className="rounded-lg border bg-muted/40 p-3 text-sm text-muted-foreground">
+                  Saved to your account — only you can edit it, from any
+                  device, with no edit code. Manage your notes in the
+                  dashboard.
+                </p>
+              ) : (
+                <>
+                  <div className="flex flex-col gap-2">
+                    <Label>Editing allowed by</Label>
+                    <RadioGroup
+                      value={editingPolicy}
+                      onValueChange={(value) =>
+                        setEditingPolicy(value as typeof editingPolicy)
+                      }
+                      className="gap-2"
+                    >
+                      <label className="flex items-start gap-2 rounded-lg border p-3 has-[[data-state=checked]]:border-ring">
+                        <RadioGroupItem value="edit_code" className="mt-0.5" />
+                        <span>
+                          <span className="block text-sm font-medium">
+                            Anyone with the edit code
+                          </span>
+                          <span className="block text-xs text-muted-foreground">
+                            Share the passcode with people who should edit.
+                          </span>
+                        </span>
+                      </label>
+                      <label className="flex items-start gap-2 rounded-lg border p-3 has-[[data-state=checked]]:border-ring">
+                        <RadioGroupItem value="account" className="mt-0.5" />
+                        <span>
+                          <span className="block text-sm font-medium">
+                            Only my account
+                          </span>
+                          <span className="block text-xs text-muted-foreground">
+                            Locked until you claim this note while signed in.
+                          </span>
+                        </span>
+                      </label>
+                      <label className="flex items-start gap-2 rounded-lg border p-3 has-[[data-state=checked]]:border-ring">
+                        <RadioGroupItem value="read_only" className="mt-0.5" />
+                        <span>
+                          <span className="block text-sm font-medium">
+                            Read-only forever
+                          </span>
+                          <span className="block text-xs text-muted-foreground">
+                            Permanently locked. Nobody can edit it again.
+                          </span>
+                        </span>
+                      </label>
+                    </RadioGroup>
+                  </div>
 
-              {editingPolicy === "edit_code" ? (
+                  {editingPolicy === "edit_code" ? (
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="edit-code">Edit code</Label>
                   <div className="flex items-center gap-2">
@@ -334,6 +366,8 @@ export function SaveShareDialog({
                   </div>
                 </div>
               ) : null}
+                </>
+              )}
 
               <div className="flex flex-col gap-2">
                 <Label>Expires</Label>

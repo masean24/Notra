@@ -150,6 +150,20 @@ export type Database = {
         }
         Returns: unknown
       }
+      create_user_note: {
+        Args: {
+          p_title: string
+          p_content: unknown
+          p_content_format: string
+          p_expires_at: string | null
+          p_visibility: string
+        }
+        Returns: string
+      }
+      claim_note: {
+        Args: { p_public_id: string; p_code: string }
+        Returns: unknown
+      }
       check_edit_session: {
         Args: { p_public_id: string; p_token: string }
         Returns: boolean

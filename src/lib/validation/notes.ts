@@ -63,3 +63,32 @@ export type SaveNoteInput = z.infer<typeof saveNoteSchema>
 export const verifyEditSchema = z.object({
   code: z.string().min(1, "Enter the edit code.").max(64),
 })
+
+export type VerifyEditInput = z.infer<typeof verifyEditSchema>
+
+/** Same payload as verify-edit: claim requests only carry the edit code. */
+export const claimNoteSchema = verifyEditSchema
+
+export type ClaimNoteInput = z.infer<typeof claimNoteSchema>
+
+/**
+ * Owner-only dashboard updates. Field whitelist on purpose: columns such as
+ * public_id, owner_id, deleted_at or revision_no are never client-editable
+ * through this schema (soft-delete/restore have dedicated routes).
+ */
+export const updateNoteSchema = z
+  .object({
+    // No default here: an empty update body must fail, not fill in "".
+    title: z.string().max(MAX_TITLE_LENGTH).optional(),
+    favorite: z.boolean().optional(),
+    visibility: z.enum(VISIBILITIES).optional(),
+  })
+  .refine(
+    (data) =>
+      data.title !== undefined ||
+      data.favorite !== undefined ||
+      data.visibility !== undefined,
+    "Nothing to update."
+  )
+
+export type UpdateNoteInput = z.infer<typeof updateNoteSchema>

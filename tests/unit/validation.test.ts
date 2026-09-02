@@ -3,9 +3,11 @@ import { describe, expect, it } from "vitest"
 import {
   createNoteSchema,
   saveNoteSchema,
+  updateNoteSchema,
   verifyEditSchema,
 } from "@/lib/validation/notes"
 import { deriveTitleFromContent } from "@/lib/notes/title"
+import { extractPublicId } from "@/lib/notes/public-id"
 
 describe("createNoteSchema", () => {
   const validBase = {
@@ -108,6 +110,55 @@ describe("verifyEditSchema", () => {
   it("requires a non-empty code", () => {
     expect(verifyEditSchema.safeParse({ code: "" }).success).toBe(false)
     expect(verifyEditSchema.safeParse({ code: "K8F2" }).success).toBe(true)
+  })
+})
+
+describe("updateNoteSchema", () => {
+  it("accepts individual field updates", () => {
+    expect(updateNoteSchema.safeParse({ favorite: true }).success).toBe(true)
+    expect(
+      updateNoteSchema.safeParse({ title: "Renamed", visibility: "private" })
+        .success
+    ).toBe(true)
+  })
+
+  it("rejects an empty update", () => {
+    expect(updateNoteSchema.safeParse({}).success).toBe(false)
+  })
+
+  it("rejects unknown visibilities", () => {
+    expect(
+      updateNoteSchema.safeParse({ visibility: "unlisted" }).success
+    ).toBe(false)
+  })
+})
+
+describe("extractPublicId", () => {
+  it("accepts a bare 7-character ID", () => {
+    expect(extractPublicId("uqQzCpM")).toBe("uqQzCpM")
+    expect(extractPublicId("  uqQzCpM  ")).toBe("uqQzCpM")
+  })
+
+  it("extracts the ID from a full share URL", () => {
+    expect(extractPublicId("https://opennotepad.app/n/uqQzCpM")).toBe(
+      "uqQzCpM"
+    )
+    expect(extractPublicId("http://localhost:3000/n/Ab8KxP2/")).toBe(
+      "Ab8KxP2"
+    )
+  })
+
+  it("extracts the ID from a relative path", () => {
+    expect(extractPublicId("/n/Ab8KxP2")).toBe("Ab8KxP2")
+  })
+
+  it("returns null for anything else", () => {
+    expect(extractPublicId("")).toBeNull()
+    expect(extractPublicId("short")).toBeNull()
+    expect(extractPublicId("way-too-long-input")).toBeNull()
+    expect(extractPublicId("https://opennotepad.app/other/Ab8KxP2")).toBeNull()
+    expect(extractPublicId("https://opennotepad.app/n/Ab8KxP2/extra")).toBeNull()
+    expect(extractPublicId("not a url")).toBeNull()
   })
 })
 

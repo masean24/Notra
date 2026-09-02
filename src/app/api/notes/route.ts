@@ -53,6 +53,30 @@ export async function POST(request: NextRequest) {
   }
   const input = parsed.data
 
+  // Signed-in callers create an owned note (editing only via the account, no
+  // edit code — authorization is owner_id + RLS). Guests keep the edit-code
+  // flow below.
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user) {
+    const { data: ownedPublicId, error: ownedError } = await supabase.rpc(
+      "create_user_note",
+      {
+        p_title: input.title,
+        p_content: input.content ?? null,
+        p_content_format: input.contentFormat,
+        p_expires_at: input.expiresAt ?? null,
+        p_visibility: input.visibility,
+      }
+    )
+    if (ownedError) {
+      return mapRpcError(ownedError)
+    }
+    return successResponse(
+      { publicId: ownedPublicId as string, sessionIssued: false },
+      201
+    )
+  }
+
   const { data: publicId, error } = await supabase.rpc("create_guest_note", {
     p_title: input.title,
     p_content: input.content ?? null,

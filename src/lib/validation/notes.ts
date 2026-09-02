@@ -118,3 +118,39 @@ export const revokeShareSchema = z.object({
 export const restoreRevisionSchema = z.object({
   revisionNo: z.number().int().positive(),
 })
+
+export const claimSlugSchema = z.object({
+  slug: z
+    .string()
+    .min(3, "Slugs are at least 3 characters.")
+    .max(63, "Slugs are at most 63 characters.")
+    .regex(
+      /^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/,
+      "Use lowercase letters, digits, and hyphens (no leading/trailing hyphen)."
+    ),
+})
+
+export const updateSeoSchema = z
+  .object({
+    metaTitle: z.string().max(200).optional(),
+    metaDescription: z.string().max(300).optional(),
+    /** Absolute http(s) URL or empty to clear. */
+    canonicalUrl: z
+      .union([
+        z.literal(""),
+        z.url("Enter a valid absolute URL."),
+      ])
+      .optional(),
+    /** Storage path within the social-images bucket. */
+    socialImagePath: z.string().max(512).optional(),
+  })
+  .refine(
+    (data) =>
+      data.metaTitle !== undefined ||
+      data.metaDescription !== undefined ||
+      data.canonicalUrl !== undefined ||
+      data.socialImagePath !== undefined,
+    "Nothing to update."
+  )
+
+export type UpdateSeoInput = z.infer<typeof updateSeoSchema>

@@ -227,6 +227,13 @@ export function NoteCard({
             <Button
               variant="ghost"
               size="sm"
+              render={<Link href={`/notes/${note.public_id}/seo`} />}
+            >
+              SEO
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               disabled={busy}
               onClick={moveToTrash}
               className="ml-auto text-destructive hover:text-destructive"

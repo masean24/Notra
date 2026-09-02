@@ -3,6 +3,7 @@ import { type NextRequest } from "next/server"
 import { errorResponse, successResponse } from "@/lib/api/response"
 import { assertCsrf } from "@/lib/security/csrf"
 import { createClient } from "@/lib/supabase/server"
+import type { NoteUpdate } from "@/types/database"
 import { updateNoteSchema } from "@/lib/validation/notes"
 
 interface PublicNotePayload {
@@ -94,9 +95,16 @@ export async function PATCH(
     )
   }
 
+  // Map schema keys to column names (SEO fields are snake_case in the DB).
+  const input = parsed.data
+  const update: NoteUpdate = {}
+  if (input.title !== undefined) update.title = input.title
+  if (input.favorite !== undefined) update.favorite = input.favorite
+  if (input.visibility !== undefined) update.visibility = input.visibility
+
   const { data: updated, error } = await supabase
     .from("notes")
-    .update(parsed.data)
+    .update(update)
     .eq("public_id", publicId)
     .eq("owner_id", user.id)
     .is("deleted_at", null)

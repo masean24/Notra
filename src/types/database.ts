@@ -59,6 +59,10 @@ export type NoteRow = {
   deleted_at: string | null
   favorite: boolean
   revision_no: number
+  meta_title: string | null
+  meta_description: string | null
+  canonical_url: string | null
+  social_image_path: string | null
   created_at: string
   updated_at: string
 }
@@ -78,6 +82,10 @@ export type NoteInsert = {
   deleted_at?: string | null
   favorite?: boolean
   revision_no?: number
+  meta_title?: string | null
+  meta_description?: string | null
+  canonical_url?: string | null
+  social_image_path?: string | null
   created_at?: string
   updated_at?: string
 }
@@ -97,6 +105,10 @@ export type NoteUpdate = {
   deleted_at?: string | null
   favorite?: boolean
   revision_no?: number
+  meta_title?: string | null
+  meta_description?: string | null
+  canonical_url?: string | null
+  social_image_path?: string | null
   created_at?: string
   updated_at?: string
 }
@@ -202,6 +214,14 @@ export type Database = {
       }
       redeem_share: {
         Args: { p_token: string; p_session_token: string }
+        Returns: unknown
+      }
+      claim_slug: {
+        Args: { p_public_id: string; p_slug: string }
+        Returns: unknown
+      }
+      get_note_by_slug: {
+        Args: { p_slug: string }
         Returns: unknown
       }
     }

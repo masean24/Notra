@@ -59,22 +59,22 @@
 }
 
 /*
- * Notra design tokens — "Quiet Premium".
+ * Notra design tokens — Clean Modern Studio (Light Alabaster & Deep Carbon Slate).
  * Brand palette (raw values) lives in the --notra-* variables; semantic shadcn
  * tokens below reference them so every component picks up the brand.
  */
 :root {
   /* Notra brand palette */
-  --notra-obsidian: #171717;
-  --notra-warm-paper: #faf9f6;
-  --notra-olive: #a5ad91;
-  --notra-graphite: #777777;
-  --notra-soft-border: #e7e5e0;
+  --notra-obsidian: #0f172a;
+  --notra-warm-paper: #f8fafc;
+  --notra-olive: #6366f1;
+  --notra-graphite: #64748b;
+  --notra-soft-border: #e2e8f0;
   --notra-surface: #ffffff;
-  --notra-olive-tint: #eef0e8;
-  --notra-deep-charcoal: #242424;
-  /* Derived: olive dark enough for small text on light surfaces (AA) */
-  --notra-olive-ink: #566040;
+  --notra-olive-tint: #eef2ff;
+  --notra-deep-charcoal: #111827;
+  /* Derived: brand dark enough for small text on light surfaces (AA) */
+  --notra-olive-ink: #4f46e5;
 
   --background: var(--notra-warm-paper);
   --foreground: var(--notra-obsidian);
@@ -83,12 +83,11 @@
   --popover: var(--notra-surface);
   --popover-foreground: var(--notra-obsidian);
   --primary: var(--notra-obsidian);
-  --primary-foreground: var(--notra-warm-paper);
-  --secondary: #f1f0eb;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
   --secondary-foreground: var(--notra-obsidian);
-  --muted: #f1f0eb;
-  /* Graphite (#777) is 4.3:1 on Warm Paper; #6b6b6b reaches AA (5.1:1) for small text */
-  --muted-foreground: #6b6b6b;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
   --accent: var(--notra-olive-tint);
   --accent-foreground: var(--notra-obsidian);
   --destructive: oklch(0.577 0.245 27.325);
@@ -97,16 +96,16 @@
   --ring: var(--notra-olive);
   --brand: var(--notra-olive);
   --brand-ink: var(--notra-olive-ink);
-  --chart-1: #c9cfba;
+  --chart-1: #a5b4fc;
   --chart-2: var(--notra-olive);
-  --chart-3: #7f8868;
-  --chart-4: var(--notra-olive-ink);
+  --chart-3: #4f46e5;
+  --chart-4: #4338ca;
   --chart-5: var(--notra-obsidian);
   --radius: 0.625rem;
-  --sidebar: var(--notra-warm-paper);
+  --sidebar: #f1f5f9;
   --sidebar-foreground: var(--notra-obsidian);
   --sidebar-primary: var(--notra-obsidian);
-  --sidebar-primary-foreground: var(--notra-warm-paper);
+  --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: var(--notra-olive-tint);
   --sidebar-accent-foreground: var(--notra-obsidian);
   --sidebar-border: var(--notra-soft-border);
@@ -114,39 +113,39 @@
 }
 
 .dark {
-  --background: var(--notra-obsidian);
-  --foreground: #f4f2ed;
-  --card: var(--notra-deep-charcoal);
-  --card-foreground: #f4f2ed;
-  --popover: var(--notra-deep-charcoal);
-  --popover-foreground: #f4f2ed;
-  --primary: #f4f2ed;
-  --primary-foreground: var(--notra-obsidian);
-  --secondary: #2e2e2c;
-  --secondary-foreground: #f4f2ed;
-  --muted: #2a2a28;
-  --muted-foreground: #a9a69f;
-  --accent: #32352b;
-  --accent-foreground: #f4f2ed;
+  --background: #0b0f17;
+  --foreground: #f8fafc;
+  --card: #111827;
+  --card-foreground: #f8fafc;
+  --popover: #111827;
+  --popover-foreground: #f8fafc;
+  --primary: #f8fafc;
+  --primary-foreground: #0b0f17;
+  --secondary: #1e293b;
+  --secondary-foreground: #f8fafc;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #1e1b4b;
+  --accent-foreground: #f8fafc;
   --destructive: oklch(0.704 0.191 22.216);
-  --border: rgb(244 242 237 / 11%);
-  --input: rgb(244 242 237 / 15%);
-  --ring: var(--notra-olive);
-  --brand: var(--notra-olive);
-  --brand-ink: #c5cbb2;
-  --chart-1: #c9cfba;
-  --chart-2: var(--notra-olive);
-  --chart-3: #7f8868;
-  --chart-4: #5f6850;
-  --chart-5: #3c4132;
-  --sidebar: var(--notra-deep-charcoal);
-  --sidebar-foreground: #f4f2ed;
-  --sidebar-primary: var(--notra-olive);
-  --sidebar-primary-foreground: var(--notra-obsidian);
-  --sidebar-accent: #32352b;
-  --sidebar-accent-foreground: #f4f2ed;
-  --sidebar-border: rgb(244 242 237 / 11%);
-  --sidebar-ring: var(--notra-olive);
+  --border: rgb(255 255 255 / 10%);
+  --input: rgb(255 255 255 / 14%);
+  --ring: #818cf8;
+  --brand: #818cf8;
+  --brand-ink: #a5b4fc;
+  --chart-1: #c7d2fe;
+  --chart-2: #818cf8;
+  --chart-3: #6366f1;
+  --chart-4: #4f46e5;
+  --chart-5: #3730a3;
+  --sidebar: #0f1420;
+  --sidebar-foreground: #f8fafc;
+  --sidebar-primary: #818cf8;
+  --sidebar-primary-foreground: #0b0f17;
+  --sidebar-accent: #1e293b;
+  --sidebar-accent-foreground: #f8fafc;
+  --sidebar-border: rgb(255 255 255 / 10%);
+  --sidebar-ring: #818cf8;
 }
 @layer base {
   * {

@@ -40,12 +40,14 @@ interface FloatingLeftToolbarProps {
   editor: Editor | null
   onOpenAi?: () => void
   position?: ToolbarPosition
+  embedded?: boolean
 }
 
 export function FloatingLeftToolbar({
   editor,
   onOpenAi,
   position = "bottom",
+  embedded = false,
 }: FloatingLeftToolbarProps) {
   const [linkOpen, setLinkOpen] = useState(false)
   const [linkUrl, setLinkUrl] = useState("")
@@ -103,7 +105,11 @@ export function FloatingLeftToolbar({
       role="toolbar"
       aria-label="Editor formatting tools"
       className={
-        isBottom
+        embedded
+          ? isBottom
+            ? "sticky bottom-4 mx-auto mt-6 z-30 flex w-fit items-center gap-1 rounded-2xl border border-border/80 bg-card/95 px-2.5 py-1.5 shadow-xl backdrop-blur-xl transition-all duration-300 max-w-full overflow-x-auto"
+            : "fixed left-4 top-1/2 -translate-y-1/2 z-30 hidden lg:flex flex-col items-center gap-1 rounded-2xl border border-border/80 bg-card/95 p-1.5 shadow-xl backdrop-blur-xl transition-all duration-300"
+          : isBottom
           ? "fixed bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1 rounded-2xl border border-border/80 bg-card/90 px-2.5 py-1.5 shadow-2xl backdrop-blur-xl transition-all duration-300 max-w-[calc(100vw-2rem)] overflow-x-auto"
           : "fixed left-5 top-1/2 -translate-y-1/2 z-30 hidden md:flex flex-col items-center gap-1 rounded-2xl border border-border/80 bg-card/90 p-1.5 shadow-2xl backdrop-blur-xl transition-all duration-300"
       }

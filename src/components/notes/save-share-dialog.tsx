@@ -65,20 +65,26 @@ export interface SaveShareDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   content: unknown
+  /** Optional live getter to read the freshest editor JSON on submit */
+  getContent?: () => unknown
   /** Preset title suggestion (derived from the document). */
   suggestedTitle: string
-  onSaved: (publicId: string, savedTitle: string) => void
+  onSaved: (publicId: string, savedTitle: string, savedContent?: unknown) => void
   /** Signed-in visitors save to their account — no edit code needed. */
   isAuthenticated?: boolean
+  /** If already saved, immediately show the share link view */
+  existingPublicId?: string | null
 }
 
 export function SaveShareDialog({
   open,
   onOpenChange,
   content,
+  getContent,
   suggestedTitle,
   onSaved,
   isAuthenticated = false,
+  existingPublicId = null,
 }: SaveShareDialogProps) {
   const [title, setTitle] = useState(suggestedTitle)
   const [editingPolicy, setEditingPolicy] =
@@ -95,7 +101,9 @@ export function SaveShareDialog({
   const [result, setResult] = useState<{
     publicId: string
     editCode: string | null
-  } | null>(null)
+  } | null>(() =>
+    existingPublicId ? { publicId: existingPublicId, editCode: null } : null
+  )
 
   // The parent remounts this dialog (via key) on every open, so plain
   // initializers above give fresh state — no reset effects needed.
@@ -131,6 +139,9 @@ export function SaveShareDialog({
     }
 
     setSubmitting(true)
+    const liveContent = getContent ? getContent() : content
+    const finalTitle =
+      title.trim() || deriveTitleFromContent(liveContent) || "Untitled note"
     try {
       const effectivePolicy = isAuthenticated ? "account" : editingPolicy
       const data = await apiFetch<{ publicId: string; sessionIssued: boolean }>(
@@ -138,8 +149,8 @@ export function SaveShareDialog({
         {
           method: "POST",
           body: JSON.stringify({
-            title,
-            content,
+            title: finalTitle,
+            content: liveContent,
             contentFormat: "tiptap_json",
             editingPolicy: effectivePolicy,
             editCode:
@@ -157,7 +168,7 @@ export function SaveShareDialog({
             ? effectiveEditCode
             : null,
       })
-      onSaved(data.publicId, title)
+      onSaved(data.publicId, finalTitle, liveContent)
     } catch (error) {
       if (error instanceof ApiRequestError) {
         toast.error(error.message)
@@ -166,8 +177,8 @@ export function SaveShareDialog({
         // the note can be created by the sync engine once back online.
         await enqueueOp({
           kind: "create",
-          title,
-          content,
+          title: finalTitle,
+          content: liveContent,
           contentFormat: "tiptap_json",
           baseUpdatedAt: null,
           requiresAuth: true,

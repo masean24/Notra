@@ -134,11 +134,15 @@ export interface NoteEditorProps {
   /** Notify parent when title changes */
   onTitleChange?: (title: string) => void
   /** Notify parent when note is saved/updated */
-  onNoteChange?: (note: { publicId: string; title: string }) => void
+  onNoteChange?: (note: { publicId: string; title: string; content?: unknown }) => void
   /** Real-time editor stats and rendered content for Live Preview */
   onEditorStatsChange?: (stats: EditorStats) => void
   /** Ref to imperatively trigger dialogs/actions from outer frame */
   editorApiRef?: React.MutableRefObject<EditorApi | null>
+  /** Optional custom left slot in header when embedded in Dashboard */
+  leftHeaderSlot?: React.ReactNode
+  /** Optional extra action buttons in header (e.g. Split Preview toggle) */
+  extraHeaderActions?: React.ReactNode
 }
 
 const subscribeStorage = (cb: () => void) => {
@@ -180,6 +184,8 @@ export function NoteEditor({
   onNoteChange,
   onEditorStatsChange,
   editorApiRef,
+  leftHeaderSlot,
+  extraHeaderActions,
 }: NoteEditorProps) {
   const [docTitle, setDocTitle] = useState(initialTitle)
   const [, setStorageVersion] = useState(0)
@@ -241,6 +247,12 @@ export function NoteEditor({
   const [reauthPending, setReauthPending] = useState(false)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const cloudAutoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const latestTitleRef = useRef<string>(initialTitle)
+
+  useEffect(() => {
+    latestTitleRef.current = docTitle
+  }, [docTitle])
 
   // Update content if initialContent changes
   useEffect(() => {
@@ -560,24 +572,61 @@ export function NoteEditor({
     }
   }, [editor, isCreateMode])
 
-  // Persist working draft
+  // Persist working draft (create mode) or auto-save to cloud (existing note mode)
   const persistDraft = useCallback(() => {
-    if (!editor || !isCreateMode) {
+    if (!editor) {
       return
     }
     setSaveStatus("syncing")
-    if (draftTimer.current) {
-      clearTimeout(draftTimer.current)
+    if (isCreateMode) {
+      if (draftTimer.current) {
+        clearTimeout(draftTimer.current)
+      }
+      const snapshot = editor.getJSON()
+      draftTimer.current = setTimeout(() => {
+        saveDraft(snapshot)
+          .then(() => {
+            setSaveStatus("saved")
+          })
+          .catch(() => {})
+      }, 400)
+      return
     }
-    const snapshot = editor.getJSON()
-    draftTimer.current = setTimeout(() => {
-      saveDraft(snapshot)
-        .then(() => {
-          setSaveStatus("saved")
+
+    // Existing saved note: debounce cloud auto-save so edits are always persisted
+    if (savedPublicId) {
+      if (cloudAutoSaveTimer.current) {
+        clearTimeout(cloudAutoSaveTimer.current)
+      }
+      cloudAutoSaveTimer.current = setTimeout(() => {
+        const snapshot = editor.getJSON()
+        const titleToSave =
+          latestTitleRef.current ||
+          savedTitle ||
+          deriveTitleFromContent(snapshot) ||
+          "Untitled note"
+        apiFetch<{ revisionNo: number }>(`/api/notes/${savedPublicId}/save`, {
+          method: "PUT",
+          body: JSON.stringify({
+            title: titleToSave,
+            content: snapshot,
+            contentFormat: "tiptap_json",
+          }),
         })
-        .catch(() => {})
-    }, 400)
-  }, [editor, isCreateMode])
+          .then(() => {
+            setSaveStatus("cloud")
+            onNoteChange?.({
+              publicId: savedPublicId,
+              title: titleToSave,
+              content: snapshot,
+            })
+          })
+          .catch(() => {
+            setSaveStatus("offline")
+          })
+      }, 900)
+    }
+  }, [editor, isCreateMode, savedPublicId, savedTitle, onNoteChange])
 
   useEffect(() => {
     if (!editor) {
@@ -616,13 +665,18 @@ export function NoteEditor({
   const readingMinutes =
     stats.words === 0 ? 0 : Math.max(1, Math.round(stats.words / 200))
 
-  async function saveExisting() {
+  async function saveExisting(openShareAfter = false) {
     if (!editor || !savedPublicId) {
       return
     }
+    if (cloudAutoSaveTimer.current) {
+      clearTimeout(cloudAutoSaveTimer.current)
+    }
     setSaving(true)
     setSaveStatus("syncing")
-    const titleToSave = docTitle || savedTitle || deriveTitleFromContent(editor.getJSON())
+    const currentContent = editor.getJSON()
+    const titleToSave =
+      docTitle || savedTitle || deriveTitleFromContent(currentContent) || "Untitled note"
     try {
       await apiFetch<{ revisionNo: number }>(
         `/api/notes/${savedPublicId}/save`,
@@ -630,14 +684,22 @@ export function NoteEditor({
           method: "PUT",
           body: JSON.stringify({
             title: titleToSave,
-            content: editor.getJSON(),
+            content: currentContent,
             contentFormat: "tiptap_json",
           }),
         }
       )
       setSaveStatus("cloud")
       toast.success("Saved to cloud.")
-      onNoteChange?.({ publicId: savedPublicId, title: titleToSave })
+      onNoteChange?.({
+        publicId: savedPublicId,
+        title: titleToSave,
+        content: currentContent,
+      })
+      if (openShareAfter) {
+        setDialogSession((session) => session + 1)
+        setSaveDialogOpen(true)
+      }
     } catch (error) {
       if (error instanceof ApiRequestError) {
         toast.error(error.message)
@@ -646,7 +708,7 @@ export function NoteEditor({
           kind: "save",
           publicId: savedPublicId,
           title: titleToSave,
-          content: editor.getJSON(),
+          content: currentContent,
           contentFormat: "tiptap_json",
           baseUpdatedAt: serverUpdatedAt,
           requiresAuth: isAuthenticated,
@@ -661,22 +723,25 @@ export function NoteEditor({
     }
   }
 
-  const openSaveDialog = useCallback(() => {
-    if (!editor) {
-      return
-    }
-    if (editor.isEmpty) {
-      toast.error("Write something first — the note is still empty.")
-      return
-    }
-    if (isCreateMode) {
-      setDialogSession((session) => session + 1)
-      setSaveDialogOpen(true)
-      return
-    }
-    void saveExisting()
+  const openSaveDialog = useCallback(
+    (forceShareModal = false) => {
+      if (!editor) {
+        return
+      }
+      if (editor.isEmpty && !docTitle.trim()) {
+        toast.error("Write something first — the note is still empty.")
+        return
+      }
+      if (isCreateMode) {
+        setDialogSession((session) => session + 1)
+        setSaveDialogOpen(true)
+        return
+      }
+      void saveExisting(forceShareModal)
+    },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editor, isCreateMode, savedPublicId, savedTitle, docTitle])
+    [editor, isCreateMode, savedPublicId, savedTitle, docTitle]
+  )
 
   // Ctrl/Cmd+S keyboard shortcut
   useEffect(() => {
@@ -777,14 +842,22 @@ export function NoteEditor({
     return () => window.removeEventListener("keydown", onKeyDown)
   }, [zenMode])
 
-  function handleSaved(newPublicId: string, finalTitle: string) {
+  function handleSaved(
+    newPublicId: string,
+    finalTitle: string,
+    savedContent?: unknown
+  ) {
     setSavedPublicId(newPublicId)
     setSavedTitle(finalTitle)
     setDocTitle(finalTitle)
     setSaveStatus("cloud")
     clearDraft().catch(() => {})
     onTitleChange?.(finalTitle)
-    onNoteChange?.({ publicId: newPublicId, title: finalTitle })
+    onNoteChange?.({
+      publicId: newPublicId,
+      title: finalTitle,
+      content: savedContent ?? editor?.getJSON(),
+    })
   }
 
   function handleExport(format: ExportFormat) {
@@ -832,10 +905,10 @@ export function NoteEditor({
   useEffect(() => {
     if (editorApiRef) {
       editorApiRef.current = {
-        openShare: openSaveDialog,
+        openShare: () => openSaveDialog(true),
         openAi: () => setAiOpen(true),
         exportNote: handleExport,
-        saveNow: openSaveDialog,
+        saveNow: () => openSaveDialog(false),
       }
     }
   }, [editorApiRef, openSaveDialog])
@@ -1031,54 +1104,58 @@ export function NoteEditor({
 
       {/* Top Navigation Bar */}
       {!zenMode && !hideHeader ? (
-        <header className="sticky top-0 z-40 h-14 flex items-center justify-between gap-3 border-b border-border/60 bg-background/85 px-4 sm:px-6 backdrop-blur-xl transition-all">
+        <header className="sticky top-0 z-40 h-14 flex items-center justify-between gap-3 border-b border-border/60 bg-background/85 px-4 sm:px-6 backdrop-blur-xl transition-all shrink-0">
           {/* Left: Brand & Document Context */}
           <div className="flex items-center gap-2.5 min-w-0">
-            {isAuthenticated && !embedded ? (
-              <Link
-                href="/dashboard"
-                className="flex items-center gap-1.5 rounded-lg border border-border/60 bg-card/60 px-2.5 py-1 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-all"
-                title="Back to Dashboard"
-              >
-                <ArrowLeft className="size-3.5" />
-                <span className="hidden sm:inline">Dashboard</span>
-              </Link>
-            ) : null}
+            {leftHeaderSlot ? (
+              leftHeaderSlot
+            ) : (
+              <>
+                {isAuthenticated && !embedded ? (
+                  <Link
+                    href="/dashboard"
+                    className="flex items-center gap-1.5 rounded-lg border border-border/60 bg-card/60 px-2.5 py-1 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-all"
+                    title="Back to Dashboard"
+                  >
+                    <ArrowLeft className="size-3.5" />
+                    <span className="hidden sm:inline">Dashboard</span>
+                  </Link>
+                ) : null}
 
-            {!embedded ? (
-              <Link
-                href="/"
-                className="flex items-center gap-2 text-sm font-semibold shrink-0 group"
-                aria-label="Notra home"
-              >
-                <NotraMark className="size-6 transition-transform group-hover:scale-105" />
-                <span className="hidden sm:inline font-bold tracking-tight">Notra</span>
-                <span className="hidden md:inline rounded-md bg-muted/80 px-1.5 py-0.5 text-[10px] font-mono font-medium text-muted-foreground border border-border/60">
-                  v2.0
-                </span>
-              </Link>
-            ) : null}
+                {!embedded ? (
+                  <Link
+                    href="/"
+                    className="flex items-center gap-2 text-sm font-semibold shrink-0 group"
+                    aria-label="Notra home"
+                  >
+                    <NotraMark className="size-6 transition-transform group-hover:scale-105" />
+                    <span className="hidden sm:inline font-bold tracking-tight">Notra</span>
+                    <span className="hidden md:inline rounded-md bg-muted/80 px-1.5 py-0.5 text-[10px] font-mono font-medium text-muted-foreground border border-border/60">
+                      v2.0
+                    </span>
+                  </Link>
+                ) : null}
 
-            {!embedded ? (
-              <span className="hidden md:inline text-muted-foreground/35 font-mono text-xs">/</span>
-            ) : null}
+                {!embedded ? (
+                  <span className="hidden md:inline text-muted-foreground/35 font-mono text-xs">/</span>
+                ) : null}
+              </>
+            )}
 
             {/* Clickable Document Title Breadcrumb */}
-            {!embedded ? (
-              <button
-                type="button"
-                onClick={() => titleInputRef.current?.focus()}
-                className="hidden md:inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-muted/70 hover:text-foreground transition-colors max-w-[160px] lg:max-w-[220px] truncate"
-                title="Click to rename document"
-              >
-                <span className="truncate">{docTitle?.trim() || "Untitled Note"}</span>
-              </button>
-            ) : null}
+            <button
+              type="button"
+              onClick={() => titleInputRef.current?.focus()}
+              className="hidden md:inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-muted/70 hover:text-foreground transition-colors max-w-[160px] lg:max-w-[220px] truncate"
+              title="Click to rename document"
+            >
+              <span className="truncate">{docTitle?.trim() || "Untitled Note"}</span>
+            </button>
 
             {/* Real-time Save Status Pill */}
             <div
               className="flex items-center gap-1.5 rounded-full bg-card/80 px-2.5 py-1 text-[11px] font-medium text-muted-foreground shrink-0 border border-border/70 shadow-2xs"
-              title="All changes synced locally"
+              title="All changes synced"
             >
               <span
                 className={`size-1.5 rounded-full shrink-0 ${
@@ -1103,6 +1180,8 @@ export function NoteEditor({
 
           {/* Right: Grouped Actions & Primary CTA */}
           <div className="flex items-center gap-2 shrink-0">
+            {extraHeaderActions}
+
             {/* Segmented Utility Group (AI, Templates, Zen) */}
             <div className="hidden md:flex items-center rounded-xl border border-border/80 bg-card/80 p-1">
               <button
@@ -1148,8 +1227,8 @@ export function NoteEditor({
                 onFontChange={handleFontChange}
                 widthMode={widthMode}
                 onWidthModeChange={handleWidthModeChange}
-                toolbarPosition={!embedded ? toolbarPosition : undefined}
-                onToolbarPositionChange={!embedded ? handleToolbarPositionChange : undefined}
+                toolbarPosition={toolbarPosition}
+                onToolbarPositionChange={handleToolbarPositionChange}
               />
             </div>
 
@@ -1237,18 +1316,27 @@ export function NoteEditor({
             </DropdownMenu>
 
             {/* Primary Save & Share CTA Button */}
+            {!isCreateMode ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => openSaveDialog(false)}
+                disabled={saving}
+                className="h-8 gap-1.5 rounded-lg px-3 text-xs font-medium hidden sm:inline-flex"
+              >
+                <Save className="size-3.5" />
+                <span>{saving ? "Saving…" : "Save"}</span>
+              </Button>
+            ) : null}
+
             <Button
               size="sm"
-              onClick={openSaveDialog}
+              onClick={() => openSaveDialog(true)}
               disabled={saving}
               className="h-8 gap-1.5 rounded-lg px-3.5 text-xs font-semibold shadow-xs active:scale-95 transition-all"
             >
-              {isCreateMode ? (
-                <Share2 className="size-3.5" />
-              ) : (
-                <Save className="size-3.5" />
-              )}
-              <span>{saving ? "Saving…" : isCreateMode ? "Save & Share" : "Save"}</span>
+              <Share2 className="size-3.5" />
+              <span>{saving ? "Saving…" : isCreateMode ? "Save & Share" : "Share"}</span>
             </Button>
           </div>
         </header>
@@ -1285,7 +1373,7 @@ export function NoteEditor({
       <div
         className={`relative mx-auto flex w-full flex-1 flex-col items-center transition-all duration-300 ${
           embedded
-            ? `px-4 sm:px-8 pt-6 ${widthMode === "wide" ? "max-w-5xl" : "max-w-3xl"}`
+            ? "px-4 sm:px-6 pt-6 pb-20 overflow-y-auto"
             : "px-4 sm:px-6 pt-8 pb-32"
         } ${
           font === "serif"
@@ -1295,51 +1383,45 @@ export function NoteEditor({
             : "font-sans-editor"
         }`}
       >
-        {/* Elevated Document Sheet (in standalone /new or note edit mode; flat when embedded in Split Studio) */}
+        {/* Elevated Document Sheet (Unified across /new and /dashboard) */}
         <div
-          className={
-            embedded
-              ? "w-full flex-1 flex flex-col"
-              : `w-full transition-all duration-300 rounded-2xl bg-card border border-border/80 shadow-xl px-6 sm:px-14 py-10 sm:py-14 ${
-                  widthMode === "wide" ? "max-w-5xl" : "max-w-3xl"
-                }`
-          }
+          className={`w-full transition-all duration-300 rounded-2xl bg-card border border-border/80 shadow-lg px-6 sm:px-12 py-8 sm:py-12 ${
+            widthMode === "wide" ? "max-w-5xl" : "max-w-3xl"
+          }`}
         >
-          {/* Document Header / Metadata Row (Standalone Studio) */}
-          {!embedded ? (
-            <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-              {/* Interactive Note Icon & Category Tag */}
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIconIdx((prev) => (prev + 1) % NOTE_ICONS.length)}
-                  className="group flex items-center gap-1.5 rounded-lg border border-border/70 bg-muted/50 px-2.5 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-all"
-                  title="Click to cycle note icon"
-                >
-                  <span className="text-sm">{NOTE_ICONS[iconIdx]}</span>
-                  <span>Change Icon</span>
-                </button>
+          {/* Document Header / Metadata Row */}
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+            {/* Interactive Note Icon & Category Tag */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIconIdx((prev) => (prev + 1) % NOTE_ICONS.length)}
+                className="group flex items-center gap-1.5 rounded-lg border border-border/70 bg-muted/50 px-2.5 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-all"
+                title="Click to cycle note icon"
+              >
+                <span className="text-sm">{NOTE_ICONS[iconIdx]}</span>
+                <span>Change Icon</span>
+              </button>
 
-                <button
-                  type="button"
-                  onClick={() => setTagIdx((prev) => (prev + 1) % CATEGORY_TAGS.length)}
-                  className="flex items-center gap-1 rounded-lg border border-border/70 bg-muted/50 px-2.5 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-all"
-                  title="Click to switch category tag"
-                >
-                  <Hash className="size-3 text-brand-ink" />
-                  <span>{CATEGORY_TAGS[tagIdx]}</span>
-                </button>
-              </div>
-
-              {/* Date & Reading Time */}
-              <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono">
-                <Calendar className="size-3.5" />
-                <span>Today</span>
-                <span>•</span>
-                <span>~{Math.max(1, readingMinutes)} min read</span>
-              </div>
+              <button
+                type="button"
+                onClick={() => setTagIdx((prev) => (prev + 1) % CATEGORY_TAGS.length)}
+                className="flex items-center gap-1 rounded-lg border border-border/70 bg-muted/50 px-2.5 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-all"
+                title="Click to switch category tag"
+              >
+                <Hash className="size-3 text-brand-ink" />
+                <span>{CATEGORY_TAGS[tagIdx]}</span>
+              </button>
             </div>
-          ) : null}
+
+            {/* Date & Reading Time */}
+            <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono">
+              <Calendar className="size-3.5" />
+              <span>Today</span>
+              <span>•</span>
+              <span>~{Math.max(1, readingMinutes)} min read</span>
+            </div>
+          </div>
 
           {/* Document Title Input */}
           <div className="mb-6">
@@ -1376,11 +1458,11 @@ export function NoteEditor({
           {/* Rich Text Editor Content */}
           <EditorContent
             editor={editor}
-            className={embedded ? "flex-1 pb-16" : "min-h-[340px] pb-6"}
+            className="min-h-[340px] pb-6"
           />
 
           {/* Subtle Empty-State Quick-Starters (Auto-hides as soon as user types) */}
-          {!embedded && stats.words === 0 ? (
+          {stats.words === 0 ? (
             <div className="mt-8 border-t border-border/60 pt-6 transition-opacity duration-200">
               <p className="mb-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                 Quick start with
@@ -1426,28 +1508,16 @@ export function NoteEditor({
           ) : null}
         </div>
 
-        {/* Embedded Status Bar (when inside /dashboard Split Studio) */}
-        {embedded ? (
-          <div className="sticky bottom-0 mt-6 flex w-full items-center justify-between border-t bg-background/80 py-2.5 backdrop-blur-md z-10">
-            <WordTargetPopover
-              words={stats.words}
-              characters={stats.characters}
-              readingMinutes={readingMinutes}
-              wordTarget={wordTarget}
-              onWordTargetChange={changeWordTarget}
-            />
-          </div>
+        {/* Floating Formatting Toolbar (Bottom Dock or Left Rail) */}
+        {!zenMode ? (
+          <FloatingLeftToolbar
+            editor={editor}
+            onOpenAi={() => setAiOpen(true)}
+            position={toolbarPosition}
+            embedded={embedded}
+          />
         ) : null}
       </div>
-
-      {/* Floating Formatting Toolbar (Bottom Dock or Left Rail) */}
-      {!zenMode && !embedded ? (
-        <FloatingLeftToolbar
-          editor={editor}
-          onOpenAi={() => setAiOpen(true)}
-          position={toolbarPosition}
-        />
-      ) : null}
 
       {/* Bottom Left: Shortcuts & Brand Quick Button */}
       {!embedded && !zenMode ? (
@@ -1470,8 +1540,14 @@ export function NoteEditor({
       ) : null}
 
       {/* Bottom Right: Floating Word & Character Counter Pill */}
-      {!embedded ? (
-        <div className="fixed bottom-5 right-5 z-20 hidden sm:block">
+      {!zenMode ? (
+        <div
+          className={
+            embedded
+              ? "fixed bottom-10 right-6 z-20 hidden sm:block"
+              : "fixed bottom-5 right-5 z-20 hidden sm:block"
+          }
+        >
           <WordTargetPopover
             words={stats.words}
             characters={stats.characters}
@@ -1492,7 +1568,7 @@ export function NoteEditor({
           />
           <aside
             aria-label="Document outline"
-            className="fixed right-0 top-0 z-50 flex h-full w-72 flex-col border-l bg-card p-4 shadow-2xl transition-transform lg:top-14 lg:z-10 lg:max-h-[calc(100svh-6rem)] lg:rounded-l-xl lg:border lg:shadow-lg"
+            className="fixed right-0 top-0 z-50 flex h-full w-72 flex-col border-l bg-card p-4 shadow-2xl transition-transform lg:top-14 lg:z-40 lg:max-h-[calc(100svh-6rem)] lg:rounded-l-xl lg:border lg:shadow-lg"
           >
             <div className="mb-3 flex items-center justify-between border-b pb-2">
               <div className="flex items-center gap-1.5 text-sm font-semibold">
@@ -1546,6 +1622,8 @@ export function NoteEditor({
         open={saveDialogOpen}
         onOpenChange={setSaveDialogOpen}
         content={editor?.getJSON() ?? null}
+        getContent={() => editor?.getJSON() ?? null}
+        existingPublicId={savedPublicId}
         suggestedTitle={
           docTitle || (editor ? deriveTitleFromContent(editor.getJSON()) : "")
         }

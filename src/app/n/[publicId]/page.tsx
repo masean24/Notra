@@ -46,6 +46,7 @@ export default async function PublicNotePage({
     return (
       <NoteEditor
         key={note.public_id}
+        initialTitle={note.title ?? ""}
         initialContent={note.content}
         publicId={note.public_id}
         isAuthenticated

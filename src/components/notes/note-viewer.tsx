@@ -3,13 +3,10 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { LockOpen } from "lucide-react"
-import { NotraMark } from "@/components/brand/notra-logo"
-import { EditorContent, useEditor } from "@tiptap/react"
-import type { JSONContent } from "@tiptap/react"
-import StarterKit from "@tiptap/starter-kit"
+import { Calendar, LockOpen, Plus } from "lucide-react"
 import { toast } from "sonner"
 
+import { NotraMark } from "@/components/brand/notra-logo"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -22,6 +19,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { NoteEditor } from "@/components/editor/note-editor"
+import { ReadOnlyContent } from "@/components/notes/read-only-content"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { ApiRequestError, apiFetch } from "@/lib/client/api"
 
@@ -61,6 +59,7 @@ export function NoteView({ note, editable }: NoteViewProps) {
     return (
       <NoteEditor
         key={note.public_id}
+        initialTitle={note.title}
         initialContent={note.content}
         publicId={note.public_id}
         onRevoke={revoking ? undefined : handleRevoke}
@@ -70,38 +69,70 @@ export function NoteView({ note, editable }: NoteViewProps) {
   }
 
   return (
-    <div className="flex min-h-svh flex-col">
-      <header className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b bg-background/80 px-4 py-2 backdrop-blur-md">
-        <Link
-          href="/"
-          className="flex items-center gap-2 text-sm font-semibold"
-          aria-label="Notra home"
-        >
-          <NotraMark className="size-4" />
-          Notra
-        </Link>
+    <div className="flex min-h-svh flex-col bg-background">
+      <header className="sticky top-0 z-20 flex h-14 items-center justify-between gap-3 border-b border-border/60 bg-background/85 px-4 sm:px-6 backdrop-blur-xl">
+        <div className="flex items-center gap-2.5">
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-sm font-semibold group"
+            aria-label="Notra home"
+          >
+            <NotraMark className="size-6 transition-transform group-hover:scale-105" />
+            <span className="font-bold tracking-tight">Notra</span>
+          </Link>
+          <span className="text-muted-foreground/35 font-mono text-xs">/</span>
+          <span className="rounded-full bg-brand/10 border border-brand/25 px-2.5 py-0.5 text-[11px] font-medium text-brand-ink">
+            Shared Note
+          </span>
+        </div>
+
         <div className="flex items-center gap-2">
-          <ThemeToggle />
-          <Button size="sm" onClick={() => setUnlockOpen(true)}>
-            <LockOpen className="size-4" aria-hidden />
-            Unlock editing
+          <ThemeToggle className="size-8 rounded-lg border border-border/80 bg-card/70 text-muted-foreground hover:text-foreground" />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setUnlockOpen(true)}
+            className="h-8 gap-1.5 rounded-lg text-xs"
+          >
+            <LockOpen className="size-3.5" aria-hidden />
+            <span>Unlock editing</span>
+          </Button>
+          <Button
+            size="sm"
+            render={<Link href="/new" />}
+            className="h-8 gap-1.5 rounded-lg text-xs hidden sm:inline-flex"
+          >
+            <Plus className="size-3.5" aria-hidden />
+            <span>New Note</span>
           </Button>
         </div>
       </header>
 
-      <article className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
-        <h1 className="mb-2 text-3xl font-bold tracking-tight text-balance">
-          {note.title || "Untitled note"}
-        </h1>
-        <p className="mb-8 text-sm text-muted-foreground">
-          Last updated{" "}
-          {new Date(note.updated_at).toLocaleString(undefined, {
-            dateStyle: "medium",
-            timeStyle: "short",
-          })}
-        </p>
-        <ReadOnlyContent content={note.content} />
-      </article>
+      <main className="mx-auto flex w-full flex-1 flex-col items-center px-4 sm:px-6 py-8 sm:py-12">
+        <article className="w-full max-w-3xl rounded-2xl border border-border/80 bg-card px-6 sm:px-14 py-10 sm:py-14 shadow-lg">
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground font-mono">
+            <span className="inline-flex items-center gap-1.5">
+              <Calendar className="size-3.5" />
+              Last updated{" "}
+              {new Date(note.updated_at).toLocaleString(undefined, {
+                dateStyle: "medium",
+                timeStyle: "short",
+              })}
+            </span>
+            <span className="rounded-md bg-muted px-2 py-0.5 text-[11px]">
+              Read-only view
+            </span>
+          </div>
+
+          <h1 className="mb-6 text-3xl sm:text-4xl font-bold tracking-tight text-foreground text-balance">
+            {note.title || "Untitled note"}
+          </h1>
+
+          <div className="border-t border-border/50 pt-6">
+            <ReadOnlyContent content={note.content} />
+          </div>
+        </article>
+      </main>
 
       <UnlockEditDialog
         open={unlockOpen}
@@ -111,23 +142,6 @@ export function NoteView({ note, editable }: NoteViewProps) {
       />
     </div>
   )
-}
-
-function ReadOnlyContent({ content }: { content: unknown }) {
-  const editor = useEditor({
-    extensions: [StarterKit],
-    content: (content ?? "") as JSONContent,
-    editable: false,
-    immediatelyRender: false,
-    editorProps: {
-      attributes: {
-        class: "tiptap",
-        "aria-label": "Note content",
-      },
-    },
-  })
-
-  return <EditorContent editor={editor} />
 }
 
 function UnlockEditDialog({

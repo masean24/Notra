@@ -76,6 +76,7 @@ export default async function ShareRedemptionPage({
     return (
       <NoteEditor
         key={publicId}
+        initialTitle={payload.title ?? ""}
         initialContent={payload.content}
         publicId={publicId}
         serverUpdatedAt={payload.updated_at}

@@ -61,9 +61,9 @@ export default function LandingPage() {
       <main className="relative flex-1 flex flex-col w-full overflow-x-clip">
         {/* Full-Viewport Hero Wrapper (Main Showcase + Architectural Telemetry Ledger) */}
         <div className="relative min-h-[calc(100svh-4rem)] flex flex-col justify-between overflow-hidden">
-          {/* Subtle Warm Olive Radial Atmosphere + Interactive Constellation */}
+          {/* Subtle Brand Radial Atmosphere + Interactive Constellation */}
           <div
-            className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[720px] bg-[radial-gradient(ellipse_75%_55%_at_50%_-8%,rgba(165,173,145,0.18),rgba(255,255,255,0))] dark:bg-[radial-gradient(ellipse_75%_55%_at_50%_-8%,rgba(165,173,145,0.16),rgba(0,0,0,0))] -z-10"
+            className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[720px] bg-[radial-gradient(ellipse_75%_55%_at_50%_-8%,rgba(99,102,241,0.14),rgba(255,255,255,0))] dark:bg-[radial-gradient(ellipse_75%_55%_at_50%_-8%,rgba(129,140,248,0.16),rgba(0,0,0,0))] -z-10"
             aria-hidden
           />
           <HeroConstellationCanvas />

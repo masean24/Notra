@@ -10,6 +10,7 @@ import {
   PanelLeft,
 } from "lucide-react"
 import { useTheme } from "next-themes"
+import { triggerThemeTransition } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import {
   Popover,
@@ -65,7 +66,12 @@ export function ReadingSettingsPopover({
           <div className="grid grid-cols-2 gap-1.5 rounded-xl border border-border/80 bg-muted/40 p-1">
             <button
               type="button"
-              onClick={() => setTheme("dark")}
+              onClick={(e) =>
+                triggerThemeTransition("dark", setTheme, {
+                  x: e.clientX,
+                  y: e.clientY,
+                })
+              }
               className={`flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs transition-all ${
                 !isLight
                   ? "bg-card font-medium text-foreground shadow-xs border border-border/60"
@@ -77,7 +83,12 @@ export function ReadingSettingsPopover({
             </button>
             <button
               type="button"
-              onClick={() => setTheme("light")}
+              onClick={(e) =>
+                triggerThemeTransition("light", setTheme, {
+                  x: e.clientX,
+                  y: e.clientY,
+                })
+              }
               className={`flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs transition-all ${
                 isLight
                   ? "bg-card font-medium text-foreground shadow-xs border border-border/60"

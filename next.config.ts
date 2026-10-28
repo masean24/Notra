@@ -55,7 +55,8 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   // Produces .next/standalone for the Docker image (SPEC §19).
-  output: "standalone",
+  // Disabled on Vercel where Vercel's own builder traces serverless outputs.
+  output: process.env.VERCEL ? undefined : "standalone",
   async headers() {
     return [
       {

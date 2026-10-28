@@ -12,58 +12,78 @@ function GitHubIcon() {
 
 export function LandingFooter() {
   return (
-    <footer className="border-t border-border/40 bg-card/40 text-muted-foreground text-sm">
+    <footer className="border-t border-border/60 bg-card/40 text-muted-foreground text-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-8 py-16">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-10">
           {/* Col 1: Brand & Status (2-col on desktop) */}
           <div className="md:col-span-2 space-y-4">
-            <Link href="/" className="flex items-center gap-2.5 font-bold tracking-tight text-foreground">
-              <NotraMark className="size-7" />
-              <span className="text-base font-bold">Notra</span>
-              <span className="rounded bg-primary/10 border border-primary/20 px-1.5 py-0.2 text-[10px] font-mono text-primary">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2.5 font-semibold tracking-tight text-foreground"
+            >
+              <div className="flex size-7 items-center justify-center rounded-lg bg-foreground text-background">
+                <NotraMark className="size-4" />
+              </div>
+              <span className="text-base font-semibold">Notra</span>
+              <span className="rounded bg-brand/15 border border-brand/30 px-1.5 py-0.5 text-[10px] font-mono text-brand-ink">
                 v2.0
               </span>
             </Link>
 
             <p className="text-xs text-muted-foreground leading-relaxed max-w-sm">
-              Your thoughts, smarter. An AI-powered notes and knowledge workspace engineered for speed, privacy, and focus. No accounts required, no telemetry, always free.
+              Your thoughts, smarter. A quiet, local-first notes and knowledge studio engineered for instant speed, cryptographic privacy, and editorial focus.
             </p>
 
-            <div className="inline-flex items-center gap-2 rounded-full border border-brand/20 bg-brand/5 px-3 py-1 text-xs text-brand-ink">
+            <div className="inline-flex items-center gap-2 rounded-full border border-brand/25 bg-brand/8 px-3 py-1 text-xs font-mono text-brand-ink">
               <span className="size-1.5 rounded-full bg-brand animate-pulse" />
-              <span className="font-medium">All systems operational</span>
+              <span>All systems operational · 0ms local vault</span>
             </div>
           </div>
 
-          {/* Col 2: Product */}
+          {/* Col 2: Workspaces */}
           <div className="space-y-3">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground">
-              Product
+            <h4 className="font-mono text-[11px] font-semibold uppercase tracking-wider text-foreground">
+              Workspaces
             </h4>
             <ul className="space-y-2 text-xs">
               <li>
-                <Link href="/new" className="hover:text-foreground transition-colors">
+                <Link
+                  href="/new"
+                  className="hover:text-foreground transition-colors"
+                >
                   Guest Canvas (/new)
                 </Link>
               </li>
               <li>
-                <Link href="/dashboard" className="hover:text-foreground transition-colors">
+                <Link
+                  href="/dashboard"
+                  className="hover:text-foreground transition-colors"
+                >
                   Member Split Studio
                 </Link>
               </li>
               <li>
-                <a href="#features" className="hover:text-foreground transition-colors">
-                  Hover Toolbar &amp; Slash
+                <a
+                  href="#features"
+                  className="hover:text-foreground transition-colors"
+                >
+                  Dual Architecture
                 </a>
               </li>
               <li>
-                <a href="#features" className="hover:text-foreground transition-colors">
-                  BYOK AI Copilot
+                <a
+                  href="#pillars"
+                  className="hover:text-foreground transition-colors"
+                >
+                  BYOK Gemini Copilot
                 </a>
               </li>
               <li>
-                <a href="#comparison" className="hover:text-foreground transition-colors">
-                  Feature Comparison
+                <a
+                  href="#comparison"
+                  className="hover:text-foreground transition-colors"
+                >
+                  Specification Matrix
                 </a>
               </li>
             </ul>
@@ -71,31 +91,41 @@ export function LandingFooter() {
 
           {/* Col 3: Architecture & Privacy */}
           <div className="space-y-3">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground">
-              Privacy &amp; Tech
+            <h4 className="font-mono text-[11px] font-semibold uppercase tracking-wider text-foreground">
+              Architecture
             </h4>
             <ul className="space-y-2 text-xs">
               <li>
-                <span className="text-muted-foreground/80">Local-First Vault</span>
+                <span className="text-muted-foreground/85">
+                  IndexedDB Local-First Vault
+                </span>
               </li>
               <li>
-                <span className="text-muted-foreground/80">Zero Third-Party Trackers</span>
+                <span className="text-muted-foreground/85">
+                  AES-256-GCM Key Encryption
+                </span>
               </li>
               <li>
-                <span className="text-muted-foreground/80">SHA-256 Hashed Secrets</span>
+                <span className="text-muted-foreground/85">
+                  SHA-256 Secret Edit Codes
+                </span>
               </li>
               <li>
-                <span className="text-muted-foreground/80">Tiptap ProseMirror Engine</span>
+                <span className="text-muted-foreground/85">
+                  Tiptap ProseMirror AST
+                </span>
               </li>
               <li>
-                <span className="text-muted-foreground/80">Supabase &amp; IndexedDB</span>
+                <span className="text-muted-foreground/85">
+                  Supabase PostgreSQL Sync
+                </span>
               </li>
             </ul>
           </div>
 
           {/* Col 4: Open Source */}
           <div className="space-y-3">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground">
+            <h4 className="font-mono text-[11px] font-semibold uppercase tracking-wider text-foreground">
               Open Source
             </h4>
             <ul className="space-y-2 text-xs">
@@ -117,31 +147,36 @@ export function LandingFooter() {
                   rel="noopener noreferrer"
                   className="hover:text-foreground transition-colors"
                 >
-                  Docker Self-Host
+                  Docker &amp; Vercel Guide
                 </a>
               </li>
               <li>
-                <span className="text-muted-foreground/80">MIT License</span>
+                <span className="text-muted-foreground/85">MIT License</span>
               </li>
               <li>
-                <a href="#faq" className="hover:text-foreground transition-colors">
-                  Community FAQ
+                <a
+                  href="#faq"
+                  className="hover:text-foreground transition-colors"
+                >
+                  Architecture FAQ
                 </a>
               </li>
             </ul>
           </div>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="mt-12 pt-6 border-t border-border/40 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
-          <p>© {new Date().getFullYear()} Notra. Open source software released under MIT License.</p>
-          <div className="flex items-center gap-4 text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <GitBranch className="size-3.5" />
+        {/* Bottom Colophon Bar */}
+        <div className="mt-12 pt-6 border-t border-border/50 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono">
+          <p>
+            © {new Date().getFullYear()} Notra. Released under the MIT License.
+          </p>
+          <div className="flex items-center gap-5 text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <GitBranch className="size-3.5 text-brand-ink" />
               <span>Zero Vendor Lock-in</span>
             </span>
-            <span className="flex items-center gap-1">
-              <ShieldCheck className="size-3.5" />
+            <span className="flex items-center gap-1.5">
+              <ShieldCheck className="size-3.5 text-brand-ink" />
               <span>Self-Hostable</span>
             </span>
           </div>

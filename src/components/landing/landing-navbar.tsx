@@ -9,6 +9,7 @@ import {
   Sparkles,
   Scale,
   HelpCircle,
+  Columns2,
 } from "lucide-react"
 import { NotraMark } from "@/components/brand/notra-logo"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -24,50 +25,69 @@ function GitHubIcon() {
 }
 
 const navLinks = [
-  { href: "#features", label: "Features", icon: Sparkles },
-  { href: "#comparison", label: "Why Notra", icon: Scale },
+  { href: "#features", label: "Architecture", icon: Sparkles },
+  { href: "#pillars", label: "Craft & AI", icon: Columns2 },
+  { href: "#comparison", label: "Spec Matrix", icon: Scale },
   { href: "#faq", label: "FAQ", icon: HelpCircle },
 ]
 
 export function LandingNavbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
 
-  // Close mobile menu on Esc
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") setMobileMenuOpen(false)
     }
+    function onScroll() {
+      setScrolled(window.scrollY > 12)
+    }
     window.addEventListener("keydown", onKeyDown)
-    return () => window.removeEventListener("keydown", onKeyDown)
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => {
+      window.removeEventListener("keydown", onKeyDown)
+      window.removeEventListener("scroll", onScroll)
+    }
   }, [])
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/85 backdrop-blur-xl transition-all">
-        <div className="mx-auto flex lg:grid lg:grid-cols-[1fr_auto_1fr] h-15 max-w-7xl items-center justify-between px-4 sm:px-8">
-          {/* Left: Brand */}
-          <div className="flex items-center justify-start">
+      <header
+        className={`sticky top-0 z-40 w-full transition-all duration-300 ${
+          scrolled
+            ? "border-b border-border/70 bg-background/88 backdrop-blur-xl shadow-[0_1px_20px_-10px_rgba(0,0,0,0.08)]"
+            : "border-b border-border/40 bg-background/70 backdrop-blur-md"
+        }`}
+      >
+        <div className="mx-auto flex lg:grid lg:grid-cols-[1fr_auto_1fr] h-16 max-w-7xl items-center justify-between px-4 sm:px-8">
+          {/* Left: Brand Lockup */}
+          <div className="flex items-center justify-start gap-3">
             <Link
               href="/"
               className="inline-flex items-center gap-2.5 text-foreground group shrink-0"
             >
-              <NotraMark className="size-6 transition-transform duration-200 group-hover:scale-[1.03]" />
-              <span className="text-[15px] font-semibold tracking-tight">
+              <div className="flex size-8 items-center justify-center rounded-lg bg-foreground text-background shadow-2xs transition-transform duration-200 group-hover:scale-[1.03]">
+                <NotraMark className="size-4.5" />
+              </div>
+              <span className="text-base font-semibold tracking-[-0.02em]">
                 Notra
               </span>
             </Link>
+            <span className="hidden sm:inline-flex items-center rounded-md border border-border/80 bg-muted/50 px-1.5 py-0.5 font-mono text-[10px] font-medium text-muted-foreground">
+              v2.0
+            </span>
           </div>
 
-          {/* Center: Mathematically Centered Navigation Links */}
+          {/* Center: Mathematically Centered Editorial Navigation */}
           <nav
             aria-label="Main Navigation"
-            className="hidden lg:flex items-center justify-center gap-1 rounded-full border border-border/70 bg-muted/40 px-1.5 py-1 backdrop-blur-md"
+            className="hidden lg:flex items-center justify-center gap-0.5 rounded-full border border-border/75 bg-card/80 p-1 shadow-2xs backdrop-blur-md"
           >
             {navLinks.map((item) => (
               <a
                 key={item.href}
                 href={item.href}
-                className="rounded-full px-3.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-background/90 transition-colors"
+                className="rounded-full px-4 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all"
               >
                 {item.label}
               </a>
@@ -76,7 +96,6 @@ export function LandingNavbar() {
 
           {/* Right: Calm, Cohesive Actions */}
           <div className="flex items-center justify-end gap-1.5">
-            {/* GitHub Icon Link */}
             <a
               href="https://github.com/Masean24/Notra"
               target="_blank"
@@ -88,24 +107,20 @@ export function LandingNavbar() {
               <GitHubIcon />
             </a>
 
-            {/* Theme Toggle */}
             <ThemeToggle className="size-8 rounded-lg text-muted-foreground hover:bg-muted/70 hover:text-foreground transition-colors" />
 
-            {/* Subtle Divider (Desktop) */}
-            <div className="hidden sm:block h-4 w-px bg-border/70 mx-1" />
+            <div className="hidden sm:block h-4 w-px bg-border/70 mx-1.5" />
 
-            {/* Auth Actions (Desktop) */}
             <div className="hidden sm:flex items-center">
               <AuthNav />
             </div>
 
-            {/* Primary CTA (Desktop & Tablet) */}
             <Button
               size="sm"
               render={<Link href="/new" />}
-              className="h-8 rounded-lg gap-1.5 px-3.5 text-xs font-medium hidden sm:inline-flex"
+              className="h-8.5 rounded-lg gap-1.5 px-3.5 text-xs font-medium hidden sm:inline-flex shadow-2xs"
             >
-              <span>Write Now</span>
+              <span>Launch /new</span>
               <ArrowRight className="size-3" />
             </Button>
 
@@ -118,7 +133,11 @@ export function LandingNavbar() {
               aria-label="Toggle Navigation Menu"
               aria-expanded={mobileMenuOpen}
             >
-              {mobileMenuOpen ? <X className="size-4" /> : <Menu className="size-4" />}
+              {mobileMenuOpen ? (
+                <X className="size-4" />
+              ) : (
+                <Menu className="size-4" />
+              )}
             </Button>
           </div>
         </div>
@@ -126,9 +145,8 @@ export function LandingNavbar() {
 
       {/* Mobile Drawer Menu Sheet */}
       {mobileMenuOpen ? (
-        <div className="fixed inset-0 top-14 z-30 lg:hidden bg-background/95 backdrop-blur-xl border-b overflow-y-auto animate-in fade-in-20 duration-200">
+        <div className="fixed inset-0 top-16 z-30 lg:hidden bg-background/95 backdrop-blur-xl border-b overflow-y-auto animate-in fade-in-20 duration-200">
           <div className="flex flex-col p-6 space-y-6 max-w-lg mx-auto">
-            {/* Section links */}
             <div className="space-y-1">
               <span className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground px-3">
                 Navigation
@@ -153,30 +171,35 @@ export function LandingNavbar() {
               </nav>
             </div>
 
-            {/* Divider */}
             <div className="h-px w-full bg-border/60" />
 
-            {/* Mobile Auth and Action buttons */}
             <div className="space-y-3">
               <span className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground px-3">
-                Account &amp; Actions
+                Workspace Access
               </span>
               <div className="flex flex-col gap-2 pt-1">
                 <Button
-                  render={<Link href="/new" onClick={() => setMobileMenuOpen(false)} />}
+                  render={
+                    <Link
+                      href="/new"
+                      onClick={() => setMobileMenuOpen(false)}
+                    />
+                  }
                   className="h-10 w-full justify-center text-sm font-semibold gap-2"
                 >
                   <NotraMark className="size-4" />
-                  <span>Start Writing (Instant &amp; Free)</span>
+                  <span>Open Guest Canvas (/new)</span>
                 </Button>
 
-                <div className="flex items-center gap-2 pt-1" onClick={() => setMobileMenuOpen(false)}>
+                <div
+                  className="flex items-center gap-2 pt-1"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
                   <AuthNav isMobile />
                 </div>
               </div>
             </div>
 
-            {/* Footer info in mobile drawer */}
             <div className="pt-4 flex items-center justify-between text-xs text-muted-foreground border-t border-border/40">
               <a
                 href="https://github.com/Masean24/Notra"
@@ -187,7 +210,7 @@ export function LandingNavbar() {
                 <GitHubIcon />
                 <span>GitHub Repository</span>
               </a>
-              <span>MIT Licensed</span>
+              <span className="font-mono text-[11px]">MIT Licensed</span>
             </div>
           </div>
         </div>

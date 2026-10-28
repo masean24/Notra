@@ -7,6 +7,7 @@ import {
   Lock,
   HardDrive,
   Cpu,
+  Columns2,
 } from "lucide-react"
 import { motion } from "motion/react"
 
@@ -20,46 +21,49 @@ import { LandingFaq } from "@/components/landing/landing-faq"
 import { LandingCta } from "@/components/landing/landing-cta"
 import { LandingFooter } from "@/components/landing/landing-footer"
 
-/* Vercel & Linear inspired stat strip */
 const architectureStats = [
   {
+    index: "01",
     icon: Zap,
     metric: "< 10ms",
-    label: "Input Latency",
-    description: "Instant typing with zero cloud roundtrips while drafting.",
+    label: "Keystroke Latency",
+    description: "Every transaction commits directly to local IndexedDB with zero cloud spinner walls.",
   },
   {
+    index: "02",
     icon: HardDrive,
     metric: "100%",
     label: "Local-First Vault",
-    description: "Stored in IndexedDB. Fully functional offline on any device.",
+    description: "Draft, search, and format offline on flights or trains with automatic delta sync.",
   },
   {
+    index: "03",
     icon: Cpu,
     metric: "BYOK",
-    label: "AI Copilot",
-    description: "Plug Gemini 2.5 Flash directly. Encrypted with AES-256-GCM.",
+    label: "Gemini 2.5 Copilot",
+    description: "Connect your own API key encrypted with AES-256-GCM. Zero monthly AI markup.",
   },
   {
+    index: "04",
     icon: Lock,
     metric: "SHA-256",
-    label: "Hashed Access",
-    description: "Secret edit codes and tokens are never stored in plain text.",
+    label: "Cryptographic Share",
+    description: "Protect shared notes with 3-word secret edit phrases and self-destructing TTL links.",
   },
 ]
 
 export default function LandingPage() {
   return (
-    <div className="relative min-h-svh flex flex-col bg-background text-foreground selection:bg-primary/20 selection:text-primary overflow-x-clip">
-      {/* Top Glassmorphic Navbar */}
+    <div className="relative min-h-svh flex flex-col bg-background text-foreground selection:bg-brand/25 selection:text-foreground overflow-x-clip">
+      {/* Top Glassmorphic Editorial Navbar */}
       <LandingNavbar />
 
       <main className="relative flex-1 flex flex-col w-full overflow-x-clip">
-        {/* Full-Viewport Hero Wrapper (Main Showcase + Integrated Telemetry Bar) */}
-        <div className="relative min-h-[calc(100svh-3.75rem)] flex flex-col justify-between overflow-hidden">
-          {/* Ambient glow mesh + interactive constellation canvas */}
+        {/* Full-Viewport Hero Wrapper (Main Showcase + Architectural Telemetry Ledger) */}
+        <div className="relative min-h-[calc(100svh-4rem)] flex flex-col justify-between overflow-hidden">
+          {/* Subtle Warm Olive Radial Atmosphere + Interactive Constellation */}
           <div
-            className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[680px] bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(165,173,145,0.16),rgba(255,255,255,0))] dark:bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(165,173,145,0.20),rgba(0,0,0,0))] -z-10"
+            className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[720px] bg-[radial-gradient(ellipse_75%_55%_at_50%_-8%,rgba(165,173,145,0.18),rgba(255,255,255,0))] dark:bg-[radial-gradient(ellipse_75%_55%_at_50%_-8%,rgba(165,173,145,0.16),rgba(0,0,0,0))] -z-10"
             aria-hidden
           />
           <HeroConstellationCanvas />
@@ -67,9 +71,9 @@ export default function LandingPage() {
           {/* Hero Main 2-Column Content */}
           <section className="relative z-10 flex-1 flex items-center px-4 sm:px-8 py-12 lg:py-16 max-w-7xl mx-auto w-full">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center w-full">
-              {/* Left Column: Monumental Brand Copy & Actions */}
-              <div className="lg:col-span-5 flex flex-col items-center lg:items-start text-center lg:text-left space-y-6">
-                {/* Release announcement pill */}
+              {/* Left Column: Editorial Brand Copy & Actions */}
+              <div className="lg:col-span-5 flex flex-col items-center lg:items-start text-center lg:text-left space-y-7">
+                {/* Release Eyebrow Pill */}
                 <motion.div
                   initial={{ opacity: 0, y: -8 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -77,119 +81,133 @@ export default function LandingPage() {
                 >
                   <a
                     href="#features"
-                    className="inline-flex items-center gap-2 rounded-full border border-border bg-card/80 px-3.5 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur-md hover:border-brand hover:text-foreground transition-colors shadow-2xs"
+                    className="group inline-flex items-center gap-2.5 rounded-full border border-border/80 bg-card/85 pl-2.5 pr-3.5 py-1 text-xs text-muted-foreground backdrop-blur-md hover:border-brand/60 hover:text-foreground transition-all shadow-2xs"
                   >
-                    <span className="size-2 rounded-full bg-brand animate-pulse" />
-                    <span className="font-semibold text-foreground">Notra 2.0</span>
-                    <span className="text-border">·</span>
-                    <span>Split Studio &amp; BYOK AI</span>
-                    <ArrowRight className="size-3 text-muted-foreground" />
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-brand/15 px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-brand-ink">
+                      <span className="size-1.5 rounded-full bg-brand animate-pulse" />
+                      Release 2.0
+                    </span>
+                    <span className="font-medium text-foreground/90">
+                      Hybrid Paper Studio &amp; BYOK AI
+                    </span>
+                    <ArrowRight className="size-3 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
                   </a>
                 </motion.div>
 
-                {/* Main Headline — Larger, Monumental Proportion */}
+                {/* Monumental Editorial Headline */}
                 <motion.div
                   initial={{ opacity: 0, y: 14 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.55, delay: 0.08 }}
-                  className="space-y-3"
+                  transition={{ duration: 0.55, delay: 0.07 }}
+                  className="space-y-4"
                 >
-                  <h1 className="text-4xl sm:text-5xl lg:text-[3.75rem] xl:text-[4.15rem] font-bold tracking-[-0.04em] leading-[1.04] text-foreground">
+                  <h1 className="text-4xl sm:text-5xl lg:text-[3.85rem] xl:text-[4.25rem] font-semibold tracking-[-0.035em] leading-[1.03] text-foreground">
                     Your thoughts,{" "}
-                    <span className="block text-brand-ink">smarter.</span>
+                    <span className="block font-serif italic font-normal text-brand-ink">
+                      smarter.
+                    </span>
                   </h1>
-                  <p className="text-lg sm:text-xl font-medium tracking-tight text-foreground/85">
-                    The quiet, local-first workspace for notes &amp; AI.
+                  <p className="text-base sm:text-lg font-medium tracking-tight text-foreground/85 max-w-md mx-auto lg:mx-0">
+                    Quiet, local-first writing crafted for instant speed and architectural clarity.
                   </p>
                 </motion.div>
 
-                {/* Subtitle */}
+                {/* Editorial Lead Description */}
                 <motion.p
                   initial={{ opacity: 0, y: 14 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.55, delay: 0.16 }}
-                  className="max-w-lg text-sm sm:text-base text-muted-foreground leading-relaxed"
+                  transition={{ duration: 0.55, delay: 0.14 }}
+                  className="max-w-lg text-sm sm:text-[15px] text-muted-foreground leading-relaxed"
                 >
-                  Open <strong className="font-medium text-foreground">/new</strong> to draft immediately on a distraction-free sheet with zero signup—or sign in to unlock the <strong className="font-medium text-foreground">Split Studio</strong> with Cloud Vault and synchronized live preview.
+                  Launch <strong className="font-medium text-foreground">/new</strong> to write on an elevated paper sheet in 0ms without an account—or sign in to enter the{" "}
+                  <strong className="font-medium text-foreground">Split Studio</strong> with a synchronized editorial reader card and encrypted Gemini vault.
                 </motion.p>
 
-                {/* Dual Action Buttons with Clear Mode Captions */}
+                {/* Dual Tactile Action Buttons + Spec Strip */}
                 <motion.div
                   initial={{ opacity: 0, y: 14 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.55, delay: 0.24 }}
-                  className="flex flex-col sm:flex-row items-stretch sm:items-start lg:justify-start justify-center gap-3.5 pt-2 w-full sm:w-auto"
+                  transition={{ duration: 0.55, delay: 0.21 }}
+                  className="w-full space-y-4 pt-1"
                 >
-                  <div className="flex flex-col items-center lg:items-start gap-1.5">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center lg:justify-start justify-center gap-3 w-full sm:w-auto">
                     <Button
                       size="lg"
                       render={<Link href="/new" />}
-                      className="w-full sm:w-auto h-12 rounded-xl px-7 text-sm font-semibold shadow-xs hover:opacity-90 transition-all active:scale-[0.98]"
+                      className="h-12 rounded-xl px-6 text-sm font-semibold shadow-sm hover:opacity-92 transition-all active:scale-[0.98] gap-2.5"
                     >
                       <span>Start Writing Instantly</span>
-                      <ArrowRight className="size-4 ml-1" />
+                      <span className="rounded bg-background/20 px-1.5 py-0.5 font-mono text-[10px] font-normal opacity-90">
+                        /new
+                      </span>
+                      <ArrowRight className="size-4" />
                     </Button>
-                    <span className="text-[11px] font-mono text-muted-foreground">
-                      Guest Canvas (/new) · No login required
-                    </span>
-                  </div>
 
-                  <div className="flex flex-col items-center lg:items-start gap-1.5">
                     <Button
                       size="lg"
                       variant="outline"
                       render={<Link href="/dashboard" />}
-                      className="w-full sm:w-auto h-12 rounded-xl px-6 text-sm font-medium bg-card/60 border-border hover:bg-muted/60 transition-all"
+                      className="h-12 rounded-xl px-5 text-sm font-medium bg-card/75 border-border/80 hover:bg-muted/60 hover:border-brand/50 transition-all gap-2"
                     >
-                      <span>Open Split Studio</span>
+                      <Columns2 className="size-4 text-brand-ink" />
+                      <span>Enter Split Studio</span>
                     </Button>
-                    <span className="text-[11px] font-mono text-muted-foreground">
-                      Member Workspace · Free account
+                  </div>
+
+                  {/* Subtle Architectural Spec Strip */}
+                  <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-4 gap-y-1.5 text-[11px] font-mono text-muted-foreground">
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="size-1.5 rounded-full bg-brand" />
+                      Guest Canvas: No login wall
                     </span>
+                    <span className="opacity-40">•</span>
+                    <span>Member Studio: Free Cloud Vault</span>
                   </div>
                 </motion.div>
               </div>
 
-              {/* Right Column: 3D Interactive Studio Showcase */}
+              {/* Right Column: Interactive Dual-Mode Showcase */}
               <div className="lg:col-span-7 w-full min-w-0">
                 <InteractiveHeroDemo />
               </div>
             </div>
           </section>
 
-          {/* Integrated Bottom Architecture & Speed Telemetry Bar */}
+          {/* Architectural Telemetry Ledger Strip */}
           <section
             aria-label="Architecture Highlights"
-            className="relative z-10 border-y border-border/50 bg-muted/20 backdrop-blur-sm py-6 px-4 sm:px-8 w-full"
+            className="relative z-10 border-y border-border/70 bg-card/45 backdrop-blur-md w-full"
           >
-            <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-border/60">
               {architectureStats.map((stat, idx) => {
                 const Icon = stat.icon
                 return (
                   <motion.div
                     key={stat.label}
-                    initial={{ opacity: 0, y: 12 }}
+                    initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.45, delay: 0.25 + idx * 0.07 }}
-                    whileHover={{ y: -2 }}
-                    className="flex items-start gap-3.5 p-3.5 sm:p-4 rounded-2xl bg-card/70 border border-border/50 hover:border-brand/40 transition-all"
+                    transition={{ duration: 0.45, delay: 0.25 + idx * 0.06 }}
+                    className="group px-6 py-5 sm:py-6 flex flex-col justify-between gap-2.5 hover:bg-muted/25 transition-colors"
                   >
-                    <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand/15 text-brand-ink border border-brand/25">
-                      <Icon className="size-4.5" />
+                    <div className="flex items-center justify-between text-[11px] font-mono text-muted-foreground">
+                      <span className="text-brand-ink font-semibold">
+                        // {stat.index}
+                      </span>
+                      <Icon className="size-3.5 text-muted-foreground group-hover:text-brand-ink transition-colors" />
                     </div>
-                    <div className="space-y-0.5 min-w-0 flex-1">
-                      <div className="flex flex-wrap items-baseline gap-x-2">
-                        <span className="font-mono text-base font-bold text-foreground whitespace-nowrap">
-                          {stat.metric}
-                        </span>
-                        <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">
-                          {stat.label}
-                        </span>
-                      </div>
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        {stat.description}
-                      </p>
+
+                    <div className="flex items-baseline gap-2.5 pt-0.5">
+                      <span className="font-mono text-xl sm:text-2xl font-semibold tracking-tight text-foreground">
+                        {stat.metric}
+                      </span>
+                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        {stat.label}
+                      </span>
                     </div>
+
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      {stat.description}
+                    </p>
                   </motion.div>
                 )
               })}
@@ -197,20 +215,20 @@ export default function LandingPage() {
           </section>
         </div>
 
-        {/* Streamlined 4-Card Bento Grid */}
+        {/* Section 01: Dual Workspace Architecture & Capability Pillars */}
         <LandingBento />
 
-        {/* Deep Comparison Table */}
+        {/* Section 02: Specification Comparison Matrix */}
         <LandingComparison />
 
-        {/* Interactive FAQ Accordion */}
+        {/* Section 03: Transparent FAQ Accordion */}
         <LandingFaq />
 
-        {/* High-Impact Bottom CTA Banner */}
+        {/* Section 04: Signature Hybrid Obsidian CTA */}
         <LandingCta />
       </main>
 
-      {/* Comprehensive Multi-Column Footer */}
+      {/* Editorial Multi-Column Footer */}
       <LandingFooter />
     </div>
   )

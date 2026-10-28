@@ -17,7 +17,7 @@ import {
 import {
   ArrowRight,
   Bold,
-  Columns,
+  Columns2,
   FileText,
   Highlighter,
   Italic,
@@ -26,14 +26,12 @@ import {
   Bot,
   Copy,
   Check,
-  Eye,
   Lock,
   Terminal,
   Target,
-  FolderKanban,
-  Zap,
 } from "lucide-react"
 
+import { NotraMark } from "@/components/brand/notra-logo"
 import { Button } from "@/components/ui/button"
 import { SlashCommandMenu } from "@/components/editor/slash-command-menu"
 
@@ -49,8 +47,8 @@ const VAULT_NOTES: VaultNote[] = [
   {
     id: "roadmap",
     filename: "roadmap-q4.md",
-    badge: "Active",
-    html: '<h2>Product Roadmap — Q4</h2><p>Click here to <strong>edit live</strong> or type <code>/</code> on a new line. Changes sync to the <mark>Live Preview</mark> instantly.</p><ul data-type="taskList"><li data-checked="true"><label><input type="checkbox" checked="checked"><span></span></label><div><p>0ms local IndexedDB draft vault</p></div></li><li data-checked="true"><label><input type="checkbox" checked="checked"><span></span></label><div><p>Tri-mode Editor, Split &amp; Reader view</p></div></li><li data-checked="false"><label><input type="checkbox"><span></span></label><div><p>Share via SHA-256 secret edit code</p></div></li></ul>',
+    badge: "★ Starred",
+    html: '<h2>Product Roadmap — Q4</h2><p>Click here to <strong>edit live</strong> or type <code>/</code> on a new line. Changes sync to the <mark>Editorial Reader Card</mark> in real time.</p><ul data-type="taskList"><li data-checked="true"><label><input type="checkbox" checked="checked"><span></span></label><div><p>0ms local IndexedDB draft vault</p></div></li><li data-checked="true"><label><input type="checkbox" checked="checked"><span></span></label><div><p>Tri-mode Editor, Split Studio &amp; Reader</p></div></li><li data-checked="false"><label><input type="checkbox"><span></span></label><div><p>Share via SHA-256 secret edit code</p></div></li></ul>',
     content: {
       type: "doc",
       content: [
@@ -67,8 +65,12 @@ const VAULT_NOTES: VaultNote[] = [
             { type: "text", text: " or type " },
             { type: "text", marks: [{ type: "code" }], text: "/" },
             { type: "text", text: " on a new line. Changes sync to the " },
-            { type: "text", marks: [{ type: "highlight" }], text: "Live Preview" },
-            { type: "text", text: " instantly." },
+            {
+              type: "text",
+              marks: [{ type: "highlight" }],
+              text: "Editorial Reader Card",
+            },
+            { type: "text", text: " in real time." },
           ],
         },
         {
@@ -80,7 +82,9 @@ const VAULT_NOTES: VaultNote[] = [
               content: [
                 {
                   type: "paragraph",
-                  content: [{ type: "text", text: "0ms local IndexedDB draft vault" }],
+                  content: [
+                    { type: "text", text: "0ms local IndexedDB draft vault" },
+                  ],
                 },
               ],
             },
@@ -90,7 +94,12 @@ const VAULT_NOTES: VaultNote[] = [
               content: [
                 {
                   type: "paragraph",
-                  content: [{ type: "text", text: "Tri-mode Editor, Split & Reader view" }],
+                  content: [
+                    {
+                      type: "text",
+                      text: "Tri-mode Editor, Split Studio & Reader",
+                    },
+                  ],
                 },
               ],
             },
@@ -100,7 +109,12 @@ const VAULT_NOTES: VaultNote[] = [
               content: [
                 {
                   type: "paragraph",
-                  content: [{ type: "text", text: "Share via SHA-256 secret edit code" }],
+                  content: [
+                    {
+                      type: "text",
+                      text: "Share via SHA-256 secret edit code",
+                    },
+                  ],
                 },
               ],
             },
@@ -165,8 +179,15 @@ const VAULT_NOTES: VaultNote[] = [
         {
           type: "paragraph",
           content: [
-            { type: "text", text: "Publish notes with a memorable 3-part secret code like " },
-            { type: "text", marks: [{ type: "code" }], text: "swift-coral-harbor" },
+            {
+              type: "text",
+              text: "Publish notes with a memorable 3-part secret code like ",
+            },
+            {
+              type: "text",
+              marks: [{ type: "code" }],
+              text: "swift-coral-harbor",
+            },
             { type: "text", text: " or set burn-after-reading TTL links." },
           ],
         },
@@ -182,7 +203,7 @@ const AI_PRESETS = [
     prompt: "/ai summarize into executive bullet points",
     output: [
       "Instant write workflow with zero registration barriers",
-      "Real-time tri-mode workspace (Editor, Split View, Live Preview)",
+      "Real-time tri-mode workspace (Editor, Split Studio, Editorial Reader)",
       "Local-first durability in IndexedDB with offline conflict protection",
       "Encrypted sharing with SHA-256 edit codes & granular TTL expiration",
     ],
@@ -194,7 +215,7 @@ const AI_PRESETS = [
     output: [
       "[x] Configure local IndexedDB draft auto-save (< 10ms latency)",
       "[ ] Claim custom vanity URL slug (/roadmap-2026) in SEO Studio",
-      "[ ] Set 500-word daily writing goal in the status bar popover",
+      "[ ] Set 1,000-word daily writing goal in the status bar popover",
     ],
   },
   {
@@ -209,7 +230,7 @@ const AI_PRESETS = [
 
 export function InteractiveHeroDemo() {
   const [activeTab, setActiveTab] = useState<"editor" | "split" | "ai">("split")
-  const [studioMode, setStudioMode] = useState<"guest" | "member">("guest")
+  const [studioMode, setStudioMode] = useState<"guest" | "member">("member")
   const [selectedNoteId, setSelectedNoteId] =
     useState<VaultNote["id"]>("roadmap")
   const [aiPresetId, setAiPresetId] =
@@ -220,25 +241,23 @@ export function InteractiveHeroDemo() {
     chars: number
     html: string
   }>({
-    words: 34,
-    chars: 214,
+    words: 35,
+    chars: 220,
     html: VAULT_NOTES[0]!.html,
   })
 
-  // 3D interactive mouse tilt + spotlight coordinates
+  // Subtle 3D tilt on pointer move
   const containerRef = useRef<HTMLDivElement | null>(null)
   const mouseX = useMotionValue(0)
   const mouseY = useMotionValue(0)
-  const spotlightX = useMotionValue(300)
-  const spotlightY = useMotionValue(200)
 
-  const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [3.5, -3.5]), {
+  const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [2.5, -2.5]), {
     stiffness: 180,
-    damping: 24,
+    damping: 26,
   })
-  const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-4.5, 4.5]), {
+  const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-3.2, 3.2]), {
     stiffness: 180,
-    damping: 24,
+    damping: 26,
   })
 
   function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
@@ -249,8 +268,6 @@ export function InteractiveHeroDemo() {
     const y = e.clientY - rect.top
     mouseX.set(x / rect.width - 0.5)
     mouseY.set(y / rect.height - 0.5)
-    spotlightX.set(x)
-    spotlightY.set(y)
   }
 
   function handleMouseLeave() {
@@ -287,7 +304,8 @@ export function InteractiveHeroDemo() {
     },
     editorProps: {
       attributes: {
-        class: "tiptap tiptap-compact text-left focus:outline-none text-sm leading-relaxed",
+        class:
+          "tiptap tiptap-compact text-left focus:outline-none text-sm leading-relaxed",
         "aria-label": "Interactive notepad demo",
       },
     },
@@ -311,7 +329,8 @@ export function InteractiveHeroDemo() {
     }
   }
 
-  const activePreset = AI_PRESETS.find((p) => p.id === aiPresetId) ?? AI_PRESETS[0]
+  const activePreset =
+    AI_PRESETS.find((p) => p.id === aiPresetId) ?? AI_PRESETS[0]
   const activeVaultNote =
     VAULT_NOTES.find((n) => n.id === selectedNoteId) ?? VAULT_NOTES[0]!
   const goalPercent = Math.min(100, Math.round((metrics.words / 45) * 100))
@@ -329,17 +348,17 @@ export function InteractiveHeroDemo() {
       ref={containerRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      className="relative w-full perspective-[1400px] space-y-3"
+      className="relative w-full perspective-[1500px] space-y-3"
     >
       {/* Top Experience Mode Switcher: Guest Canvas (/new) vs Member Split Studio (/dashboard) */}
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border/70 bg-card/85 p-1.5 backdrop-blur-md shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border/75 bg-card/90 p-1.5 backdrop-blur-md shadow-xs">
         <div className="grid grid-cols-2 gap-1 w-full sm:w-auto">
           <button
             type="button"
             onClick={() => setStudioMode("guest")}
-            className={`flex items-center justify-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+            className={`flex items-center justify-center gap-2 rounded-xl px-3.5 py-1.5 text-xs font-medium transition-all ${
               studioMode === "guest"
-                ? "bg-foreground text-background shadow-xs"
+                ? "bg-foreground text-background shadow-2xs"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -349,32 +368,32 @@ export function InteractiveHeroDemo() {
           <button
             type="button"
             onClick={() => setStudioMode("member")}
-            className={`flex items-center justify-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+            className={`flex items-center justify-center gap-2 rounded-xl px-3.5 py-1.5 text-xs font-medium transition-all ${
               studioMode === "member"
-                ? "bg-foreground text-background shadow-xs"
+                ? "bg-foreground text-background shadow-2xs"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Columns className="size-3.5" />
+            <Columns2 className="size-3.5" />
             <span>Member Split Studio</span>
           </button>
         </div>
 
-        <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-mono text-muted-foreground">
+        <span className="hidden sm:inline-flex items-center gap-2 px-3 py-1 text-[11px] font-mono text-muted-foreground">
           <span className="size-1.5 rounded-full bg-brand" />
           {studioMode === "guest"
-            ? "Instant access · No login needed"
-            : "Signed-in workspace · Vault + Split View"}
+            ? "Elevated Sheet · No login needed"
+            : "Hybrid Paper Shell · Vault + Reader Card"}
         </span>
       </div>
 
       {/* 3D Tilt Studio Frame */}
       <motion.div
         style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
-        initial={{ opacity: 0, y: 18, scale: 0.98 }}
+        initial={{ opacity: 0, y: 18, scale: 0.985 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
-        className="relative w-full overflow-hidden rounded-2xl border border-border/80 bg-card shadow-[0_28px_80px_-20px_rgba(0,0,0,0.45)]"
+        className="relative w-full overflow-hidden rounded-2xl border border-border/80 bg-card shadow-[0_32px_90px_-24px_rgba(0,0,0,0.38)]"
       >
         {studioMode === "guest" ? (
           /* ================= GUEST CANVAS (/new) PREVIEW ================= */
@@ -391,9 +410,9 @@ export function InteractiveHeroDemo() {
                 <span className="font-medium text-foreground truncate">
                   Product Roadmap — Q4
                 </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card px-2 py-0.5 text-[10px] text-muted-foreground">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-brand/30 bg-brand/10 px-2 py-0.5 font-mono text-[10px] text-brand-ink">
                   <span className="size-1.5 rounded-full bg-brand" />
-                  Saved
+                  IndexedDB • 0ms
                 </span>
               </div>
 
@@ -420,7 +439,7 @@ export function InteractiveHeroDemo() {
             <div className="relative bg-muted/25 p-4 sm:p-6 pb-16 flex flex-col items-center">
               <div className="w-full max-w-xl rounded-xl border border-border/80 bg-card p-5 sm:p-6 shadow-md text-left space-y-3">
                 {/* Metadata row */}
-                <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                <div className="flex items-center justify-between text-[11px] text-muted-foreground border-b border-border/40 pb-2.5">
                   <div className="flex items-center gap-1.5">
                     <span className="rounded-md border border-border/70 bg-muted/50 px-2 py-0.5">
                       💡 Note
@@ -429,7 +448,9 @@ export function InteractiveHeroDemo() {
                       # Personal
                     </span>
                   </div>
-                  <span className="font-mono text-[10px]">Today • ~1 min read</span>
+                  <span className="font-mono text-[10px]">
+                    Today • ~1 min read
+                  </span>
                 </div>
 
                 {/* Interactive Editor inside Guest Sheet */}
@@ -451,7 +472,9 @@ export function InteractiveHeroDemo() {
                   <>
                     <button
                       type="button"
-                      onClick={() => editor.chain().focus().toggleBold().run()}
+                      onClick={() =>
+                        editor.chain().focus().toggleBold().run()
+                      }
                       className={`p-1.5 rounded-md text-xs transition-colors ${
                         editor.isActive("bold")
                           ? "bg-accent text-foreground font-bold"
@@ -463,7 +486,9 @@ export function InteractiveHeroDemo() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => editor.chain().focus().toggleItalic().run()}
+                      onClick={() =>
+                        editor.chain().focus().toggleItalic().run()
+                      }
                       className={`p-1.5 rounded-md text-xs transition-colors ${
                         editor.isActive("italic")
                           ? "bg-accent text-foreground"
@@ -475,7 +500,9 @@ export function InteractiveHeroDemo() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => editor.chain().focus().toggleHighlight().run()}
+                      onClick={() =>
+                        editor.chain().focus().toggleHighlight().run()
+                      }
                       className={`p-1.5 rounded-md text-xs transition-colors ${
                         editor.isActive("highlight")
                           ? "bg-brand/20 text-brand-ink"
@@ -487,7 +514,9 @@ export function InteractiveHeroDemo() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => editor.chain().focus().toggleTaskList().run()}
+                      onClick={() =>
+                        editor.chain().focus().toggleTaskList().run()
+                      }
                       className={`p-1.5 rounded-md text-xs transition-colors ${
                         editor.isActive("taskList")
                           ? "bg-accent text-brand-ink"
@@ -537,328 +566,337 @@ export function InteractiveHeroDemo() {
           </div>
         ) : (
           /* ================= MEMBER SPLIT STUDIO (/dashboard) PREVIEW ================= */
-          <div>
-        {/* Window Title Bar & Interactive Tab Selector */}
-        <div className="flex flex-wrap items-center justify-between border-b border-border/60 bg-muted/40 px-4 py-3 gap-2">
-          {/* Left: Window Dots & Active Filename */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 shrink-0">
-              <div className="size-2.5 rounded-full bg-foreground/20" />
-              <div className="size-2.5 rounded-full bg-foreground/20" />
-              <div className="size-2.5 rounded-full bg-foreground/20" />
-            </div>
-
-            <span className="hidden md:inline-flex items-center gap-1.5 font-mono text-xs text-muted-foreground">
-              <FolderKanban className="size-3.5 text-brand-ink" />
-              <span className="text-foreground font-medium">
-                {activeVaultNote.filename}
-              </span>
-            </span>
-
-            <div className="flex items-center rounded-lg bg-muted/80 p-0.5 border border-border/50 text-xs">
-              <button
-                type="button"
-                onClick={() => setActiveTab("editor")}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md font-medium transition-all ${
-                  activeTab === "editor"
-                    ? "bg-background text-foreground shadow-2xs"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <FileText className="size-3" />
-                <span>Editor</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab("split")}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md font-medium transition-all ${
-                  activeTab === "split"
-                    ? "bg-background text-foreground shadow-2xs"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <Columns className="size-3 text-brand-ink" />
-                <span>Split View</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab("ai")}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md font-medium transition-all ${
-                  activeTab === "ai"
-                    ? "bg-background text-foreground shadow-2xs"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <Bot className="size-3 text-brand-ink" />
-                <span>AI Copilot</span>
-                <span className="text-[10px] font-mono px-1 py-0.2 rounded bg-brand/15 text-brand-ink border border-brand/25 hidden sm:inline">
-                  BYOK
-                </span>
-              </button>
-            </div>
-          </div>
-
-          {/* Right: Quick Editor Toolbar */}
-          {activeTab !== "ai" && editor ? (
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => editor.chain().focus().toggleBold().run()}
-                className={`p-1.5 rounded-md hover:bg-background transition-colors ${
-                  editor.isActive("bold")
-                    ? "bg-background text-foreground font-bold shadow-2xs"
-                    : "text-muted-foreground"
-                }`}
-                title="Bold"
-              >
-                <Bold className="size-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => editor.chain().focus().toggleItalic().run()}
-                className={`p-1.5 rounded-md hover:bg-background transition-colors ${
-                  editor.isActive("italic")
-                    ? "bg-background text-foreground shadow-2xs"
-                    : "text-muted-foreground"
-                }`}
-                title="Italic"
-              >
-                <Italic className="size-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => editor.chain().focus().toggleHighlight().run()}
-                className={`p-1.5 rounded-md hover:bg-background transition-colors ${
-                  editor.isActive("highlight")
-                    ? "bg-brand/20 text-brand-ink shadow-2xs"
-                    : "text-muted-foreground"
-                }`}
-                title="Highlight"
-              >
-                <Highlighter className="size-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => editor.chain().focus().toggleTaskList().run()}
-                className={`p-1.5 rounded-md hover:bg-background transition-colors ${
-                  editor.isActive("taskList")
-                    ? "bg-background text-brand-ink shadow-2xs"
-                    : "text-muted-foreground"
-                }`}
-                title="Checklist"
-              >
-                <ListTodo className="size-3.5" />
-              </button>
-            </div>
-          ) : null}
-        </div>
-
-        {/* Workspace Body: Left Mini Vault Sidebar + Main Editor/Split/AI Surface */}
-        <div className="grid grid-cols-1 xl:grid-cols-12 min-h-[310px]">
-          {/* Left Mini Vault Sidebar (Visible on xl screens for true Studio feel) */}
-          <div className="hidden xl:flex xl:col-span-3 flex-col justify-between border-r border-border/60 bg-muted/20 p-3 text-left">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between px-1.5 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-                <span>Local Vault</span>
-                <span className="text-brand-ink">3 notes</span>
-              </div>
-              <div className="space-y-1">
-                {VAULT_NOTES.map((note) => {
-                  const active = note.id === selectedNoteId
-                  return (
-                    <button
-                      key={note.id}
-                      type="button"
-                      onClick={() => handleSelectVaultNote(note.id)}
-                      className={`flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-xs transition-all ${
-                        active
-                          ? "bg-brand/15 text-foreground font-semibold border border-brand/30 shadow-2xs"
-                          : "text-muted-foreground hover:bg-muted/60 hover:text-foreground border border-transparent"
-                      }`}
-                    >
-                      <span className="truncate font-mono text-[11px]">
-                        {note.filename}
-                      </span>
-                      <span className="text-[9px] font-mono text-brand-ink">
-                        {note.badge}
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* Live Word Goal Bar inside Vault Sidebar */}
-            <div className="rounded-xl border border-border/60 bg-background/70 p-2.5 space-y-1.5">
-              <div className="flex items-center justify-between text-[10px] font-mono">
-                <span className="inline-flex items-center gap-1 text-muted-foreground">
-                  <Target className="size-3 text-brand-ink" />
-                  <span>Goal ({metrics.words}/45w)</span>
-                </span>
-                <span className="font-semibold text-brand-ink">{goalPercent}%</span>
-              </div>
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                <div
-                  className="h-full rounded-full bg-brand transition-all duration-300"
-                  style={{ width: `${goalPercent}%` }}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Right Surface Content */}
-          <div className="xl:col-span-9 flex flex-col min-w-0">
-            <AnimatePresence mode="wait">
-              {activeTab === "editor" ? (
-                <motion.div
-                  key="editor"
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.18 }}
-                  className="p-5 sm:p-6 text-left flex-1"
-                >
-                  <SlashCommandMenu editor={editor} onOpenAi={() => setActiveTab("ai")} />
-                  <EditorContent editor={editor} />
-                </motion.div>
-              ) : activeTab === "split" ? (
-                <motion.div
-                  key="split"
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.18 }}
-                  className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-border/60 text-left flex-1"
-                >
-                  {/* Left Pane: Interactive Editor */}
-                  <div className="flex flex-col min-w-0">
-                    <div className="flex items-center justify-between border-b border-border/40 bg-muted/20 px-4 py-1.5 text-[10px] font-mono text-muted-foreground">
-                      <span className="font-bold uppercase tracking-wider">
-                        Editor (Interactive)
-                      </span>
-                      <span>Type &ldquo;/&rdquo; for blocks</span>
-                    </div>
-                    <div className="p-4 sm:p-5 flex-1">
-                      <SlashCommandMenu
-                        editor={editor}
-                        onOpenAi={() => setActiveTab("ai")}
-                      />
-                      <EditorContent editor={editor} />
-                    </div>
-                  </div>
-
-                  {/* Right Pane: Synchronized Live Preview */}
-                  <div className="flex flex-col justify-between min-w-0 bg-muted/15">
-                    <div>
-                      <div className="flex items-center justify-between border-b border-border/40 bg-muted/20 px-4 py-1.5 text-[10px] font-mono">
-                        <span className="font-bold uppercase tracking-wider text-muted-foreground">
-                          Live Preview
-                        </span>
-                        <span className="inline-flex items-center gap-1 text-brand-ink font-medium">
-                          <Eye className="size-3" />
-                          <span>Synchronized</span>
-                        </span>
+          <div className="bg-[#171717] p-1.5 sm:p-2">
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-1.5">
+              {/* Left Obsidian App Shell Sidebar (Visible on xl screens) */}
+              <div className="hidden xl:flex xl:col-span-3 flex-col justify-between rounded-xl bg-[#171717] text-[#FAF9F6] p-3 text-left">
+                <div className="space-y-3">
+                  {/* Brand Header */}
+                  <div className="flex items-center justify-between px-1">
+                    <div className="flex items-center gap-2">
+                      <div className="flex size-6 items-center justify-center rounded-md bg-[#FAF9F6] text-[#171717]">
+                        <NotraMark className="size-3.5" />
                       </div>
-                      <div className="p-4 sm:p-5">
-                        <div
-                          className="tiptap tiptap-compact pointer-events-none select-none text-sm leading-relaxed opacity-90"
-                          dangerouslySetInnerHTML={{ __html: metrics.html }}
-                        />
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-semibold">Notra</span>
+                          <span className="rounded bg-[#A5AD91]/25 px-1 py-0.2 text-[9px] font-mono text-[#A5AD91]">
+                            v2.0
+                          </span>
+                        </div>
                       </div>
                     </div>
+                    <span className="text-[9px] font-mono text-[#A5AD91]">
+                      Hybrid
+                    </span>
                   </div>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="ai"
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.18 }}
-                  className="p-5 sm:p-6 space-y-4 text-left flex-1"
-                >
-                  {/* Preset switcher + Copy */}
-                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      {AI_PRESETS.map((preset) => (
+
+                  {/* Vault Notes */}
+                  <div className="space-y-1 pt-1">
+                    <div className="flex items-center justify-between px-1.5 text-[9px] font-mono uppercase tracking-wider text-white/45">
+                      <span>Pinned in Studio</span>
+                      <span>3</span>
+                    </div>
+                    {VAULT_NOTES.map((note) => {
+                      const active = note.id === selectedNoteId
+                      return (
                         <button
-                          key={preset.id}
+                          key={note.id}
                           type="button"
-                          onClick={() => setAiPresetId(preset.id)}
-                          className={`rounded-lg px-2.5 py-1 text-[11px] font-medium transition-all border ${
-                            aiPresetId === preset.id
-                              ? "border-brand/50 bg-brand/15 text-brand-ink"
-                              : "border-border/60 bg-muted/40 text-muted-foreground hover:text-foreground"
+                          onClick={() => handleSelectVaultNote(note.id)}
+                          className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-xs transition-all ${
+                            active
+                              ? "bg-white/12 text-white font-semibold shadow-2xs"
+                              : "text-white/65 hover:bg-white/6 hover:text-white"
                           }`}
                         >
-                          {preset.label}
+                          <span className="truncate font-mono text-[11px]">
+                            {note.filename}
+                          </span>
+                          <span className="text-[9px] font-mono text-[#A5AD91]">
+                            {note.badge}
+                          </span>
                         </button>
-                      ))}
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Live Session Flow Card inside Obsidian Sidebar */}
+                <div className="rounded-xl border border-white/10 bg-white/[0.04] p-2.5 space-y-1.5 mt-3">
+                  <div className="flex items-center justify-between text-[10px] font-mono">
+                    <span className="inline-flex items-center gap-1 text-white/70">
+                      <Target className="size-3 text-[#A5AD91]" />
+                      <span>Flow ({metrics.words}/45w)</span>
+                    </span>
+                    <span className="font-semibold text-[#A5AD91]">
+                      {goalPercent}%
+                    </span>
+                  </div>
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                    <div
+                      className="h-full rounded-full bg-[#A5AD91] transition-all duration-300"
+                      style={{ width: `${goalPercent}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Floating Inset Canvas */}
+              <div className="xl:col-span-9 flex flex-col min-w-0 rounded-xl bg-card text-card-foreground border border-border/70 overflow-hidden shadow-xl">
+                {/* Inset Studio Toolbar */}
+                <div className="flex flex-wrap items-center justify-between border-b border-border/60 bg-muted/25 px-3.5 py-2.5 gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-[11px] font-medium px-2 py-0.5 rounded bg-foreground/[0.05] text-foreground">
+                      {activeVaultNote.filename}
+                    </span>
+
+                    <div className="flex items-center rounded-lg bg-muted/80 p-0.5 border border-border/50 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab("editor")}
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md font-medium transition-all ${
+                          activeTab === "editor"
+                            ? "bg-foreground text-background shadow-2xs"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        <FileText className="size-3" />
+                        <span>Editor</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab("split")}
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md font-medium transition-all ${
+                          activeTab === "split"
+                            ? "bg-foreground text-background shadow-2xs"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        <Columns2 className="size-3" />
+                        <span>Split Studio</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab("ai")}
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md font-medium transition-all ${
+                          activeTab === "ai"
+                            ? "bg-foreground text-background shadow-2xs"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        <Bot className="size-3" />
+                        <span>AI Copilot</span>
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={copyAiSample}
-                      className="flex items-center gap-1 rounded-md border border-border/60 bg-background px-2 py-1 hover:text-foreground transition-colors text-[11px]"
-                    >
-                      {copied ? (
-                        <Check className="size-3 text-brand-ink" />
-                      ) : (
-                        <Copy className="size-3" />
-                      )}
-                      <span>{copied ? "Copied" : "Copy Output"}</span>
-                    </button>
                   </div>
 
-                  <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-3 py-2 font-mono text-[11px] text-brand-ink">
-                    <Terminal className="size-3.5 shrink-0" />
-                    <span>{activePreset.prompt}</span>
-                  </div>
-
-                  <div className="rounded-xl border border-brand/25 bg-brand/10 p-4 space-y-2 text-xs sm:text-sm">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="font-semibold text-foreground flex items-center gap-1.5">
-                        <Sparkles className="size-3.5 text-brand-ink" />
-                        <span>Gemini 2.5 Flash Response</span>
-                      </div>
-                      <span className="inline-flex items-center gap-1 text-[10px] font-mono text-muted-foreground">
-                        <Lock className="size-2.5 text-brand-ink" />
-                        <span>AES-256-GCM Encrypted Key</span>
-                      </span>
+                  {/* Quick Formatting Buttons */}
+                  {activeTab !== "ai" && editor ? (
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          editor.chain().focus().toggleBold().run()
+                        }
+                        className={`p-1.5 rounded-md hover:bg-background transition-colors ${
+                          editor.isActive("bold")
+                            ? "bg-background text-foreground font-bold shadow-2xs"
+                            : "text-muted-foreground"
+                        }`}
+                        title="Bold"
+                      >
+                        <Bold className="size-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          editor.chain().focus().toggleItalic().run()
+                        }
+                        className={`p-1.5 rounded-md hover:bg-background transition-colors ${
+                          editor.isActive("italic")
+                            ? "bg-background text-foreground shadow-2xs"
+                            : "text-muted-foreground"
+                        }`}
+                        title="Italic"
+                      >
+                        <Italic className="size-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          editor.chain().focus().toggleHighlight().run()
+                        }
+                        className={`p-1.5 rounded-md hover:bg-background transition-colors ${
+                          editor.isActive("highlight")
+                            ? "bg-brand/20 text-brand-ink shadow-2xs"
+                            : "text-muted-foreground"
+                        }`}
+                        title="Highlight"
+                      >
+                        <Highlighter className="size-3.5" />
+                      </button>
                     </div>
-                    <ul className="space-y-1.5 text-muted-foreground list-disc pl-4 leading-relaxed">
-                      {activePreset.output.map((line) => (
-                        <li key={line}>{line}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
+                  ) : null}
+                </div>
 
-        {/* Bottom Studio Status Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 bg-muted/30 px-4 py-2.5 text-xs text-muted-foreground">
-          <div className="flex flex-wrap items-center gap-3 font-mono text-[11px]">
-            <span>Words: {metrics.words}</span>
-            <span>Chars: {metrics.chars}</span>
-            <span className="inline-flex items-center gap-1.5 text-brand-ink">
-              <span className="size-1.5 rounded-full bg-brand animate-pulse" />
-              <span>0ms local latency</span>
-            </span>
+                {/* Inset Studio Body */}
+                <div className="min-h-[285px] flex flex-col">
+                  <AnimatePresence mode="wait">
+                    {activeTab === "editor" ? (
+                      <motion.div
+                        key="editor"
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        transition={{ duration: 0.18 }}
+                        className="p-5 sm:p-6 text-left flex-1"
+                      >
+                        <SlashCommandMenu
+                          editor={editor}
+                          onOpenAi={() => setActiveTab("ai")}
+                        />
+                        <EditorContent editor={editor} />
+                      </motion.div>
+                    ) : activeTab === "split" ? (
+                      <motion.div
+                        key="split"
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        transition={{ duration: 0.18 }}
+                        className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-border/60 text-left flex-1"
+                      >
+                        {/* Left Pane: Interactive Markdown Editor */}
+                        <div className="flex flex-col min-w-0">
+                          <div className="flex items-center justify-between border-b border-border/40 bg-muted/15 px-4 py-1.5 text-[10px] font-mono text-muted-foreground">
+                            <span className="font-semibold uppercase tracking-wider">
+                              Markdown Editor
+                            </span>
+                            <span>Type &ldquo;/&rdquo; for commands</span>
+                          </div>
+                          <div className="p-4 sm:p-5 flex-1">
+                            <SlashCommandMenu
+                              editor={editor}
+                              onOpenAi={() => setActiveTab("ai")}
+                            />
+                            <EditorContent editor={editor} />
+                          </div>
+                        </div>
+
+                        {/* Right Pane: Floating Editorial Reader Card */}
+                        <div className="flex flex-col min-w-0 bg-muted/20 p-3">
+                          <div className="flex-1 rounded-xl border border-border/80 bg-background/95 p-4 shadow-2xs flex flex-col">
+                            <div className="flex items-center justify-between pb-2.5 mb-3 border-b border-border/50 text-[9px] font-mono uppercase tracking-wider">
+                              <span className="inline-flex items-center gap-1.5 text-brand-ink font-semibold">
+                                <span className="size-1.5 rounded-full bg-brand" />
+                                Synchronized Reader Card
+                              </span>
+                              <span className="text-muted-foreground">
+                                Serif
+                              </span>
+                            </div>
+                            <div
+                              className="tiptap tiptap-compact font-serif pointer-events-none select-none text-sm leading-relaxed opacity-95"
+                              dangerouslySetInnerHTML={{
+                                __html: metrics.html,
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="ai"
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        transition={{ duration: 0.18 }}
+                        className="p-5 sm:p-6 space-y-4 text-left flex-1"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {AI_PRESETS.map((preset) => (
+                              <button
+                                key={preset.id}
+                                type="button"
+                                onClick={() => setAiPresetId(preset.id)}
+                                className={`rounded-lg px-2.5 py-1 text-[11px] font-medium transition-all border ${
+                                  aiPresetId === preset.id
+                                    ? "border-brand/50 bg-brand/15 text-brand-ink"
+                                    : "border-border/60 bg-muted/40 text-muted-foreground hover:text-foreground"
+                                }`}
+                              >
+                                {preset.label}
+                              </button>
+                            ))}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={copyAiSample}
+                            className="flex items-center gap-1 rounded-md border border-border/60 bg-background px-2 py-1 hover:text-foreground transition-colors text-[11px]"
+                          >
+                            {copied ? (
+                              <Check className="size-3 text-brand-ink" />
+                            ) : (
+                              <Copy className="size-3" />
+                            )}
+                            <span>{copied ? "Copied" : "Copy Output"}</span>
+                          </button>
+                        </div>
+
+                        <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-3 py-2 font-mono text-[11px] text-brand-ink">
+                          <Terminal className="size-3.5 shrink-0" />
+                          <span>{activePreset.prompt}</span>
+                        </div>
+
+                        <div className="rounded-xl border border-brand/25 bg-brand/10 p-4 space-y-2 text-xs sm:text-sm">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="font-semibold text-foreground flex items-center gap-1.5">
+                              <Sparkles className="size-3.5 text-brand-ink" />
+                              <span>Gemini 2.5 Flash Response</span>
+                            </div>
+                            <span className="inline-flex items-center gap-1 text-[10px] font-mono text-muted-foreground">
+                              <Lock className="size-2.5 text-brand-ink" />
+                              <span>AES-256-GCM Encrypted Key</span>
+                            </span>
+                          </div>
+                          <ul className="space-y-1.5 text-muted-foreground list-disc pl-4 leading-relaxed">
+                            {activePreset.output.map((line) => (
+                              <li key={line}>{line}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Inset Studio Bottom Bar */}
+                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 bg-muted/20 px-4 py-2 text-xs text-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-3 font-mono text-[11px]">
+                    <span>Words: {metrics.words}</span>
+                    <span>•</span>
+                    <span>Chars: {metrics.chars}</span>
+                    <span className="inline-flex items-center gap-1.5 text-brand-ink">
+                      <span className="size-1.5 rounded-full bg-brand animate-pulse" />
+                      <span>0ms local latency</span>
+                    </span>
+                  </div>
+                  <Button
+                    size="xs"
+                    render={<Link href="/dashboard" />}
+                    className="gap-1 h-7 text-xs font-medium"
+                  >
+                    <span>Enter Split Studio</span>
+                    <ArrowRight className="size-3" />
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
-          <Button
-            size="xs"
-            render={<Link href="/dashboard" />}
-            className="gap-1 h-7 text-xs font-medium"
-          >
-            <span>Open Split Studio</span>
-            <ArrowRight className="size-3" />
-          </Button>
-        </div>
-        </div>
         )}
       </motion.div>
     </div>

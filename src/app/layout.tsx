@@ -19,11 +19,25 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "OpenNotepad",
-    template: "%s — OpenNotepad",
+    default: "Notra — Your thoughts, smarter.",
+    template: "%s — Notra",
   },
   description:
-    "A distraction-free, open-source notepad studio. Start writing instantly, no account required.",
+    "Notra is an AI-powered notes and knowledge workspace. Start writing instantly, no account required.",
+  applicationName: "Notra",
+  openGraph: {
+    type: "website",
+    siteName: "Notra",
+    title: "Notra — Your thoughts, smarter.",
+    description:
+      "An AI-powered notes and knowledge workspace. Start writing instantly, no account required.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Notra — Your thoughts, smarter.",
+    description:
+      "An AI-powered notes and knowledge workspace. Start writing instantly, no account required.",
+  },
 };
 
 export default function RootLayout({

@@ -15,7 +15,7 @@ import {
  * buttons by default (SSR-safe) and swaps in Dashboard + Sign out once a
  * browser session is detected.
  */
-export function AuthNav() {
+export function AuthNav({ isMobile = false }: { isMobile?: boolean }) {
   const [signedIn, setSignedIn] = useState(false)
 
   useEffect(() => {
@@ -28,24 +28,74 @@ export function AuthNav() {
   }, [])
 
   if (signedIn) {
+    if (isMobile) {
+      return (
+        <div className="flex w-full items-center gap-2">
+          <Button
+            variant="outline"
+            render={<Link href="/dashboard" />}
+            className="h-10 flex-1 justify-center text-sm font-medium"
+          >
+            Dashboard
+          </Button>
+          <SignOutButton
+            size="default"
+            className="h-10 px-4 text-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+          />
+        </div>
+      )
+    }
+
     return (
-      <>
-        <Button variant="outline" render={<Link href="/dashboard" />}>
+      <div className="flex items-center gap-1">
+        <Button
+          variant="outline"
+          size="sm"
+          render={<Link href="/dashboard" />}
+          className="h-8 px-3 text-xs font-medium border-border/70 hover:bg-muted/60"
+        >
           Dashboard
         </Button>
-        <SignOutButton />
-      </>
+        <SignOutButton
+          iconOnly
+          size="icon"
+          className="size-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+        />
+      </div>
+    )
+  }
+
+  if (isMobile) {
+    return (
+      <div className="flex w-full items-center gap-2">
+        <Button
+          variant="outline"
+          render={<Link href="/login" />}
+          className="h-10 flex-1 justify-center text-sm font-medium"
+        >
+          Sign in
+        </Button>
+        <Button
+          variant="secondary"
+          render={<Link href="/signup" />}
+          className="h-10 flex-1 justify-center text-sm font-medium"
+        >
+          Sign up
+        </Button>
+      </div>
     )
   }
 
   return (
-    <>
-      <Button variant="ghost" render={<Link href="/login" />}>
+    <div className="flex items-center">
+      <Button
+        variant="ghost"
+        size="sm"
+        render={<Link href="/login" />}
+        className="h-8 px-2.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+      >
         Sign in
       </Button>
-      <Button variant="outline" render={<Link href="/signup" />}>
-        Sign up
-      </Button>
-    </>
+    </div>
   )
 }

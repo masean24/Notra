@@ -1,5 +1,5 @@
 -- ============================================================================
--- OpenNotepad — Migration 0007: AI BYOK + admin surface (Phases 8 & 9)
+-- Notra — Migration 0007: AI BYOK + admin surface (Phases 8 & 9)
 --
 -- Adds:
 --   * profiles.gemini_api_key_encrypted — the user's BYOK Gemini key,

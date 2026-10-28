@@ -10,7 +10,15 @@ import {
   isSupabaseConfigured,
 } from "@/lib/supabase/client"
 
-export function SignOutButton() {
+export function SignOutButton({
+  className,
+  size = "sm",
+  iconOnly = false,
+}: {
+  className?: string
+  size?: "default" | "xs" | "sm" | "lg" | "icon" | "icon-xs" | "icon-sm" | "icon-lg"
+  iconOnly?: boolean
+}) {
   const router = useRouter()
   const [signingOut, setSigningOut] = useState(false)
 
@@ -31,12 +39,17 @@ export function SignOutButton() {
   return (
     <Button
       variant="ghost"
-      size="sm"
+      size={size}
       onClick={handleSignOut}
       disabled={signingOut}
+      aria-label="Sign out"
+      title="Sign out"
+      className={className}
     >
-      <LogOut className="size-4" aria-hidden />
-      {signingOut ? "Signing out…" : "Sign out"}
+      <LogOut className="size-3.5" aria-hidden />
+      {!iconOnly ? (
+        <span>{signingOut ? "Signing out…" : "Sign out"}</span>
+      ) : null}
     </Button>
   )
 }

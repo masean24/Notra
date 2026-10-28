@@ -232,7 +232,7 @@ export function RevisionsDialog({
                           segment.type === "removed"
                             ? "rounded bg-destructive/15 text-destructive line-through"
                             : segment.type === "added"
-                              ? "rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+                              ? "rounded bg-brand/15 text-brand-ink"
                               : undefined
                         }
                       >

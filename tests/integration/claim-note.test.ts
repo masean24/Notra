@@ -35,7 +35,7 @@ async function getUser(role: "owner" | "other") {
 }
 
 function testEmail(): string {
-  return `phase3-${randomBytes(6).toString("hex")}@opennotepad.test`
+  return `phase3-${randomBytes(6).toString("hex")}@notra.test`
 }
 
 function testPassword(): string {

@@ -1,6 +1,6 @@
-# OpenNotepad — Master Build Specification v2
+# Notra — Master Build Specification v2
 
-**Project:** OpenNotepad — Full-Featured Open-Source Notepad Studio
+**Project:** Notra — Full-Featured Open-Source Notepad Studio
 **License:** MIT. 100% free, forever. No paywalls, no paid tiers, no pricing pages, no "Pro plan" placeholders, no ads, no third-party tracking/analytics that phones home with user data.
 
 ---
@@ -233,7 +233,7 @@ Must run locally with `git clone` → `npm install` → `npm run dev`, and via `
 
 **Self-hosting & Supabase (be explicit):** the app's `docker-compose.yml` runs the Next.js app and expects a reachable Supabase backend. Document two supported paths in the README: (a) point the env vars at a hosted Supabase project, or (b) run Supabase's official self-hosted Docker stack (the separate `docker compose` setup Supabase publishes for self-hosting) on the same host and point the env vars there. Do not attempt to re-implement Supabase services inside the app's compose file.
 
-Include: `.env.example`, `README.md` (installation, Supabase setup, env vars, migrations, local dev, Docker self-hosting, Vercel deployment, contribution workflow), `CONTRIBUTING.md`, `LICENSE` (MIT), `SECURITY.md`, `CODE_OF_CONDUCT.md`, `Dockerfile`, `docker-compose.yml`, `supabase/migrations/`. Use the placeholder name OpenNotepad, kept easy to rebrand.
+Include: `.env.example`, `README.md` (installation, Supabase setup, env vars, migrations, local dev, Docker self-hosting, Vercel deployment, contribution workflow), `CONTRIBUTING.md`, `LICENSE` (MIT), `SECURITY.md`, `CODE_OF_CONDUCT.md`, `Dockerfile`, `docker-compose.yml`, `supabase/migrations/`. Use the placeholder name Notra, kept easy to rebrand.
 
 ## 20. Testing
 
@@ -252,7 +252,7 @@ Clear, non-blank UI states for: Loading, Saving, Saved, Offline, Error, Not Foun
 ## 23. Design Details for the Landing Page
 
 - Bento feature grid: guest-first writing, edit codes, offline support, revisions, custom slugs, AI assistant (BYOK), self-hosting
-- Comparison table: OpenNotepad vs. a generic "typical online notepad" (login required? ads? tracking? open source? self-hostable?) — factual and fair, never disparaging a named competitor
+- Comparison table: Notra vs. a generic "typical online notepad" (login required? ads? tracking? open source? self-hostable?) — factual and fair, never disparaging a named competitor
 - Tech stack badges (Next.js, Supabase, Tailwind, etc.)
 - FAQ accordion: is it really free, do I need an account, what happens if I lose my edit code, how is my data handled, can I self-host
 - Self-hosting quick guide teaser linking to the full docs in the README

@@ -140,7 +140,7 @@ describe("extractPublicId", () => {
   })
 
   it("extracts the ID from a full share URL", () => {
-    expect(extractPublicId("https://opennotepad.app/n/uqQzCpM")).toBe(
+    expect(extractPublicId("https://notra.app/n/uqQzCpM")).toBe(
       "uqQzCpM"
     )
     expect(extractPublicId("http://localhost:3000/n/Ab8KxP2/")).toBe(
@@ -156,8 +156,8 @@ describe("extractPublicId", () => {
     expect(extractPublicId("")).toBeNull()
     expect(extractPublicId("short")).toBeNull()
     expect(extractPublicId("way-too-long-input")).toBeNull()
-    expect(extractPublicId("https://opennotepad.app/other/Ab8KxP2")).toBeNull()
-    expect(extractPublicId("https://opennotepad.app/n/Ab8KxP2/extra")).toBeNull()
+    expect(extractPublicId("https://notra.app/other/Ab8KxP2")).toBeNull()
+    expect(extractPublicId("https://notra.app/n/Ab8KxP2/extra")).toBeNull()
     expect(extractPublicId("not a url")).toBeNull()
   })
 })

@@ -1,6 +1,8 @@
-# OpenNotepad
+# Notra
 
-A full-featured, open-source notepad studio. MIT licensed, 100% free, forever — no paywalls, no ads, no tracking.
+> Your thoughts, smarter.
+
+Notra is an AI-powered notes and knowledge workspace. MIT licensed, 100% free, forever — no paywalls, no ads, no tracking.
 
 Start writing instantly with zero login, save and share notes with a link, claim vanity slugs, keep revisions, work offline, and use an AI writing assistant with **your own** Gemini API key. Manage everything from a dashboard when you choose to create an account.
 
@@ -12,8 +14,8 @@ Start writing instantly with zero login, save and share notes with a link, claim
 ## Quick start
 
 ```bash
-git clone <your-fork-url> opennotepad
-cd opennotepad
+git clone <your-fork-url> notra
+cd notra
 npm install
 cp .env.example .env.local   # then fill in your values
 npm run dev

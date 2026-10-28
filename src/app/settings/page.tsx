@@ -1,7 +1,8 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { NotebookPen, Settings, UserRound } from "lucide-react"
+import { LayoutDashboard, UserRound } from "lucide-react"
+import { NotraMark } from "@/components/brand/notra-logo"
 
 import { SignOutButton } from "@/components/auth/sign-out-button"
 import { ClaimNoteForm } from "@/components/settings/claim-note-form"
@@ -41,14 +42,14 @@ export default async function SettingsPage() {
         <Link
           href="/"
           className="flex items-center gap-2 text-sm font-semibold"
-          aria-label="OpenNotepad home"
+          aria-label="Notra home"
         >
-          <NotebookPen className="size-4" aria-hidden />
-          OpenNotepad
+          <NotraMark className="size-4" />
+          Notra
         </Link>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" render={<Link href="/dashboard" />}>
-            <Settings className="size-4" aria-hidden />
+            <LayoutDashboard className="size-4" aria-hidden />
             Dashboard
           </Button>
           <SignOutButton />

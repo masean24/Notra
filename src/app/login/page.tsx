@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { NotebookPen } from "lucide-react"
+import { NotraMark } from "@/components/brand/notra-logo"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -31,8 +31,8 @@ export default function LoginPage() {
         href="/"
         className="mb-8 flex items-center gap-2 text-lg font-semibold"
       >
-        <NotebookPen className="size-5" aria-hidden />
-        OpenNotepad
+        <NotraMark className="size-5" />
+        Notra
       </Link>
 
       <Suspense
@@ -121,7 +121,10 @@ function LoginForm() {
           <p className="text-sm text-muted-foreground">
             You are already signed in.
           </p>
-          <Button variant="outline" onClick={handleSignOut}>
+          <Button render={<Link href="/dashboard" />} className="w-full">
+            Go to Dashboard
+          </Button>
+          <Button variant="outline" onClick={handleSignOut} className="w-full">
             Sign out
           </Button>
         </CardContent>

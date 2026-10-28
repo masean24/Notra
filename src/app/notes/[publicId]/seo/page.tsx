@@ -1,7 +1,8 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
-import { NotebookPen, Share2 } from "lucide-react"
+import { Share2 } from "lucide-react"
+import { NotraMark } from "@/components/brand/notra-logo"
 
 import { SeoTool, type SeoNote } from "@/components/notes/seo-tool"
 import { createClient } from "@/lib/supabase/server"
@@ -55,10 +56,10 @@ export default async function NoteSeoPage({
         <Link
           href="/"
           className="flex items-center gap-2 text-sm font-semibold"
-          aria-label="OpenNotepad home"
+          aria-label="Notra home"
         >
-          <NotebookPen className="size-4" aria-hidden />
-          OpenNotepad
+          <NotraMark className="size-4" />
+          Notra
         </Link>
         <div className="flex items-center gap-2">
           <Link

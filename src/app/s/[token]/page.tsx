@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { cookies } from "next/headers"
 import { notFound } from "next/navigation"
 import Link from "next/link"
-import { NotebookPen } from "lucide-react"
+import { NotraMark } from "@/components/brand/notra-logo"
 import { NoteEditor } from "@/components/editor/note-editor"
 import { ReadOnlyContent } from "@/components/notes/read-only-content"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -89,10 +89,10 @@ export default async function ShareRedemptionPage({
         <Link
           href="/"
           className="flex items-center gap-2 text-sm font-semibold"
-          aria-label="OpenNotepad home"
+          aria-label="Notra home"
         >
-          <NotebookPen className="size-4" aria-hidden />
-          OpenNotepad
+          <NotraMark className="size-4" />
+          Notra
         </Link>
         <ThemeToggle />
       </header>

@@ -50,7 +50,7 @@ async function createSignedInUser(): Promise<{
   if (!service) {
     throw new Error("service client unavailable")
   }
-  const email = `phase4-${randomBytes(6).toString("hex")}@opennotepad.test`
+  const email = `phase4-${randomBytes(6).toString("hex")}@notra.test`
   const password = `pw-${randomBytes(12).toString("hex")}`
   const { data: created, error } = await service.auth.admin.createUser({
     email,

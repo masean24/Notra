@@ -3,7 +3,8 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { LockOpen, NotebookPen } from "lucide-react"
+import { LockOpen } from "lucide-react"
+import { NotraMark } from "@/components/brand/notra-logo"
 import { EditorContent, useEditor } from "@tiptap/react"
 import type { JSONContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
@@ -74,10 +75,10 @@ export function NoteView({ note, editable }: NoteViewProps) {
         <Link
           href="/"
           className="flex items-center gap-2 text-sm font-semibold"
-          aria-label="OpenNotepad home"
+          aria-label="Notra home"
         >
-          <NotebookPen className="size-4" aria-hidden />
-          OpenNotepad
+          <NotraMark className="size-4" />
+          Notra
         </Link>
         <div className="flex items-center gap-2">
           <ThemeToggle />

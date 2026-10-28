@@ -13,7 +13,7 @@
  *     edit code flow — user work is never silently dropped;
  *   * non-retryable validation failures (4xx) go straight to `conflicts`.
  *
- * The engine exposes plain window events (`opennotepad:sync`) so UI
+ * The engine exposes plain window events (`notra:sync`) so UI
  * components can react without a state library.
  */
 
@@ -27,7 +27,7 @@ import {
   type PendingOp,
 } from "@/lib/sync/drafts"
 
-export const SYNC_EVENT_NAME = "opennotepad:sync"
+export const SYNC_EVENT_NAME = "notra:sync"
 
 export type SyncStatus = "idle" | "syncing" | "offline" | "blocked"
 

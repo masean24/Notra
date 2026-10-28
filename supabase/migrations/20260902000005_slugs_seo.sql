@@ -1,5 +1,5 @@
 -- ============================================================================
--- OpenNotepad — Migration 0006: Vanity slugs & SEO metadata (Phase 5)
+-- Notra — Migration 0006: Vanity slugs & SEO metadata (Phase 5)
 --
 -- Adds:
 --   * SEO columns on notes: meta_title, meta_description, canonical_url,

@@ -1,9 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { MailCheck, NotebookPen } from "lucide-react"
+import { MailCheck } from "lucide-react"
+import { NotraMark } from "@/components/brand/notra-logo"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -33,6 +34,20 @@ export default function SignupPage() {
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [confirmationSent, setConfirmationSent] = useState(false)
+  const [signedIn, setSignedIn] = useState(false)
+
+  useEffect(() => {
+    if (!configured) return
+    getSupabaseBrowserClient()
+      .auth.getSession()
+      .then(({ data }) => setSignedIn(Boolean(data.session)))
+  }, [configured])
+
+  async function handleSignOut() {
+    await getSupabaseBrowserClient().auth.signOut()
+    setSignedIn(false)
+    router.refresh()
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -83,8 +98,8 @@ export default function SignupPage() {
         href="/"
         className="mb-8 flex items-center gap-2 text-lg font-semibold"
       >
-        <NotebookPen className="size-5" aria-hidden />
-        OpenNotepad
+        <NotraMark className="size-5" />
+        Notra
       </Link>
 
       <Card className="w-full max-w-sm">
@@ -103,6 +118,19 @@ export default function SignupPage() {
               </p>
             </CardContent>
           </>
+        ) : signedIn ? (
+          <CardContent className="flex flex-col gap-3 py-6">
+            <CardTitle className="text-lg">Already signed in</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              You already have an active session.
+            </p>
+            <Button render={<Link href="/dashboard" />} className="w-full">
+              Go to Dashboard
+            </Button>
+            <Button variant="outline" onClick={handleSignOut} className="w-full">
+              Sign out
+            </Button>
+          </CardContent>
         ) : confirmationSent ? (
           <CardContent className="flex flex-col items-center gap-3 py-8 text-center">
             <MailCheck className="size-10 text-muted-foreground" aria-hidden />

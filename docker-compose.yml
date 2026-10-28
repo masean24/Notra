@@ -1,4 +1,4 @@
-# OpenNotepad — app container (SPEC §19).
+# Notra — app container (SPEC §19).
 #
 # This compose file runs ONLY the Next.js app. Supabase is deliberately NOT
 # re-implemented here — it is its own official Docker stack. Two supported

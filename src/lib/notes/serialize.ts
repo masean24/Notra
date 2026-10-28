@@ -286,7 +286,7 @@ export function toHtml(doc: unknown): string {
 // ---------------------------------------------------------------------------
 
 export interface JsonBackup {
-  app: "opennotepad"
+  app: "notra"
   version: 1
   title: string
   exportedAt: string
@@ -295,7 +295,7 @@ export interface JsonBackup {
 
 export function toJsonBackup(title: string, doc: unknown): string {
   const backup: JsonBackup = {
-    app: "opennotepad",
+    app: "notra",
     version: 1,
     title,
     exportedAt: new Date().toISOString(),
@@ -309,7 +309,7 @@ export function toJsonBackup(title: string, doc: unknown): string {
 // ---------------------------------------------------------------------------
 
 const backupSchema = z.object({
-  app: z.literal("opennotepad").optional(),
+  app: z.literal("notra").optional(),
   title: z.string().max(200).optional(),
   content: z.unknown(),
 }).passthrough()

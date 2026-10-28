@@ -1,316 +1,217 @@
+"use client"
+
 import Link from "next/link"
 import {
   ArrowRight,
-  AtSign,
-  ChevronDown,
-  CloudOff,
-  Download,
-  FileCode2,
-  GitBranch,
-  KeyRound,
-  ListTree,
-  NotebookPen,
-  ShieldCheck,
-  Sparkles,
-  Server,
+  Zap,
+  Lock,
+  HardDrive,
+  Cpu,
 } from "lucide-react"
+import { motion } from "motion/react"
 
-import { ThemeToggle } from "@/components/theme-toggle"
-import { AuthNav } from "@/components/layout/auth-nav"
 import { Button } from "@/components/ui/button"
+import { LandingNavbar } from "@/components/landing/landing-navbar"
+import { InteractiveHeroDemo } from "@/components/landing/interactive-hero-demo"
+import { HeroConstellationCanvas } from "@/components/landing/hero-constellation-canvas"
+import { LandingBento } from "@/components/landing/landing-bento"
+import { LandingComparison } from "@/components/landing/landing-comparison"
+import { LandingFaq } from "@/components/landing/landing-faq"
+import { LandingCta } from "@/components/landing/landing-cta"
+import { LandingFooter } from "@/components/landing/landing-footer"
 
-/* Landing page (SPEC §23): bento feature grid, comparison table, tech
-   badges, FAQ accordion, self-host teaser — and one honest CTA: /new. */
-
-const techStack = [
-  "Next.js 16",
-  "TypeScript",
-  "Tailwind CSS v4",
-  "Supabase",
-  "Tiptap",
-  "Dexie",
-  "Vitest",
-]
-
-/** Bento cards: generous rows use col-span-2, compact rows single cells. */
-const features = [
+/* Vercel & Linear inspired stat strip */
+const architectureStats = [
   {
-    icon: NotebookPen,
-    title: "Write instantly",
-    body: "The editor opens the moment you arrive. No sign-up wall, no friction — a guest first, always an option later.",
-    span: "sm:col-span-2",
+    icon: Zap,
+    metric: "< 10ms",
+    label: "Input Latency",
+    description: "Instant typing with zero cloud roundtrips while drafting.",
   },
   {
-    icon: KeyRound,
-    title: "Edit codes, not accounts",
-    body: "A secret three-part code unlocks editing. Shown exactly once, hashed in the database, never in a URL.",
-    span: "",
+    icon: HardDrive,
+    metric: "100%",
+    label: "Local-First Vault",
+    description: "Stored in IndexedDB. Fully functional offline on any device.",
   },
   {
-    icon: CloudOff,
-    title: "Works offline",
-    body: "Drafts and edits live in IndexedDB and sync automatically when you reconnect — with honest conflict prompts.",
-    span: "",
+    icon: Cpu,
+    metric: "BYOK",
+    label: "AI Copilot",
+    description: "Plug Gemini 2.5 Flash directly. Encrypted with AES-256-GCM.",
   },
   {
-    icon: ListTree,
-    title: "Revisions & history",
-    body: "Every save snapshots the note. Browse, diff, and restore any past version — restores never lose data.",
-    span: "",
-  },
-  {
-    icon: AtSign,
-    title: "Vanity slugs & SEO",
-    body: "Claim yourname/your-note style paths and tune title, description, and social preview per note.",
-    span: "",
-  },
-  {
-    icon: Sparkles,
-    title: "AI assistant (BYOK)",
-    body: "Continue, rewrite, summarize, or title your notes with your own Gemini API key. It stays yours — the maintainers never pay for or see your usage.",
-    span: "sm:col-span-2",
-  },
-  {
-    icon: Server,
-    title: "Self-hostable",
-    body: "MIT licensed, open source, one Docker command. Point it at hosted Supabase or run the full stack yourself.",
-    span: "",
-  },
-]
-
-/** Comparison table (SPEC §23) — factual, never naming a competitor. */
-const comparison: Array<{ aspect: string; ours: string; typical: string }> = [
-  { aspect: "Requires an account to write", ours: "No", typical: "Usually" },
-  { aspect: "Ads or paywalls", ours: "None, ever", typical: "Common" },
-  { aspect: "Tracking / analytics", ours: "None", typical: "Common" },
-  { aspect: "Open source", ours: "Yes (MIT)", typical: "Rarely" },
-  { aspect: "Self-hostable", ours: "Yes", typical: "Rarely" },
-  { aspect: "Offline-first drafts", ours: "Yes", typical: "Rarely" },
-  { aspect: "AI with your own key", ours: "Yes (BYOK)", typical: "Bundled & billed" },
-]
-
-const faqs = [
-  {
-    q: "Is it really free?",
-    a: "Yes. OpenNotepad is MIT-licensed open source with no ads, no paywalls, and no premium tiers. If you self-host, you pay only your own infrastructure. AI features are bring-your-own-key, so there is no AI bill for the operators either.",
-  },
-  {
-    q: "Do I need an account?",
-    a: "No. You can write, save, and share notes as a guest using an edit code. An account is optional — it adds a dashboard, favorites, revisions across devices, and note claiming.",
-  },
-  {
-    q: "What happens if I lose my edit code?",
-    a: "The code is shown exactly once and stored only as a hash, so it cannot be recovered. If you claimed the note to an account, you keep owner access; unclaimed notes without the code can no longer be edited.",
-  },
-  {
-    q: "How is my data handled?",
-    a: "Notes live in your own (or your self-hosted) Supabase project. This app adds no tracking and no third-party analytics. Share links store only SHA-256 hashes of their tokens, and IPs used for abuse prevention are stored as salted hashes.",
-  },
-  {
-    q: "Can I self-host it?",
-    a: "Yes — one docker compose up for the app, plus Supabase from their official hosted or self-hosted stack. The README walks through both paths step by step.",
+    icon: Lock,
+    metric: "SHA-256",
+    label: "Hashed Access",
+    description: "Secret edit codes and tokens are never stored in plain text.",
   },
 ]
 
 export default function LandingPage() {
   return (
-    <div className="flex min-h-svh flex-col">
-      <header className="flex items-center justify-between px-6 py-4">
-        <Link href="/" className="flex items-center gap-2 font-semibold">
-          <NotebookPen className="size-5" aria-hidden />
-          OpenNotepad
-        </Link>
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
-          <AuthNav />
-        </div>
-      </header>
+    <div className="relative min-h-svh flex flex-col bg-background text-foreground selection:bg-primary/20 selection:text-primary overflow-x-clip">
+      {/* Top Glassmorphic Navbar */}
+      <LandingNavbar />
 
-      <main className="flex flex-1 flex-col">
-        {/* Hero */}
-        <section className="bg-grid-dots flex flex-col items-center justify-center gap-6 px-6 py-24 text-center md:py-32">
-          <h1 className="max-w-3xl text-4xl font-bold tracking-tight text-balance md:text-6xl">
-            A distraction-free notepad studio.{" "}
-            <span className="text-muted-foreground">Free and open source.</span>
-          </h1>
-          <p className="max-w-xl text-lg text-muted-foreground text-balance">
-            Start writing instantly — no account required. Save and share notes
-            with a link when you are ready.
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <Button
-              size="lg"
-              render={<Link href="/new" />}
-              className="h-11 px-6 text-base"
-            >
-              Start Writing — Instant &amp; Free
-              <ArrowRight className="size-4" aria-hidden />
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              render={<Link href="#self-host" />}
-              className="h-11 px-6 text-base"
-            >
-              <Download className="size-4" aria-hidden />
-              Self-host it
-            </Button>
-          </div>
-        </section>
+      <main className="relative flex-1 flex flex-col w-full overflow-x-clip">
+        {/* Full-Viewport Hero Wrapper (Main Showcase + Integrated Telemetry Bar) */}
+        <div className="relative min-h-[calc(100svh-3.75rem)] flex flex-col justify-between overflow-hidden">
+          {/* Ambient glow mesh + interactive constellation canvas */}
+          <div
+            className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[680px] bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(165,173,145,0.16),rgba(255,255,255,0))] dark:bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(165,173,145,0.20),rgba(0,0,0,0))] -z-10"
+            aria-hidden
+          />
+          <HeroConstellationCanvas />
 
-        {/* Bento feature grid (SPEC §23) */}
-        <section
-          aria-label="Features"
-          className="mx-auto w-full max-w-5xl px-6 pb-20"
-        >
-          <div className="grid gap-4 sm:grid-cols-3">
-            {features.map((feature) => (
-              <div
-                key={feature.title}
-                className={`rounded-xl border bg-card p-6 ${feature.span}`}
-              >
-                <feature.icon
-                  className="mb-3 size-5 text-muted-foreground"
-                  aria-hidden
-                />
-                <h2 className="mb-1 font-semibold">{feature.title}</h2>
-                <p className="text-sm text-muted-foreground">{feature.body}</p>
+          {/* Hero Main 2-Column Content */}
+          <section className="relative z-10 flex-1 flex items-center px-4 sm:px-8 py-12 lg:py-16 max-w-7xl mx-auto w-full">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center w-full">
+              {/* Left Column: Monumental Brand Copy & Actions */}
+              <div className="lg:col-span-5 flex flex-col items-center lg:items-start text-center lg:text-left space-y-6">
+                {/* Release announcement pill */}
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.45 }}
+                >
+                  <a
+                    href="#features"
+                    className="inline-flex items-center gap-2 rounded-full border border-border bg-card/80 px-3.5 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur-md hover:border-brand hover:text-foreground transition-colors shadow-2xs"
+                  >
+                    <span className="size-2 rounded-full bg-brand animate-pulse" />
+                    <span className="font-semibold text-foreground">Notra 2.0</span>
+                    <span className="text-border">·</span>
+                    <span>Split Studio &amp; BYOK AI</span>
+                    <ArrowRight className="size-3 text-muted-foreground" />
+                  </a>
+                </motion.div>
+
+                {/* Main Headline — Larger, Monumental Proportion */}
+                <motion.div
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.55, delay: 0.08 }}
+                  className="space-y-3"
+                >
+                  <h1 className="text-4xl sm:text-5xl lg:text-[3.75rem] xl:text-[4.15rem] font-bold tracking-[-0.04em] leading-[1.04] text-foreground">
+                    Your thoughts,{" "}
+                    <span className="block text-brand-ink">smarter.</span>
+                  </h1>
+                  <p className="text-lg sm:text-xl font-medium tracking-tight text-foreground/85">
+                    The quiet, local-first workspace for notes &amp; AI.
+                  </p>
+                </motion.div>
+
+                {/* Subtitle */}
+                <motion.p
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.55, delay: 0.16 }}
+                  className="max-w-lg text-sm sm:text-base text-muted-foreground leading-relaxed"
+                >
+                  Open <strong className="font-medium text-foreground">/new</strong> to draft immediately on a distraction-free sheet with zero signup—or sign in to unlock the <strong className="font-medium text-foreground">Split Studio</strong> with Cloud Vault and synchronized live preview.
+                </motion.p>
+
+                {/* Dual Action Buttons with Clear Mode Captions */}
+                <motion.div
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.55, delay: 0.24 }}
+                  className="flex flex-col sm:flex-row items-stretch sm:items-start lg:justify-start justify-center gap-3.5 pt-2 w-full sm:w-auto"
+                >
+                  <div className="flex flex-col items-center lg:items-start gap-1.5">
+                    <Button
+                      size="lg"
+                      render={<Link href="/new" />}
+                      className="w-full sm:w-auto h-12 rounded-xl px-7 text-sm font-semibold shadow-xs hover:opacity-90 transition-all active:scale-[0.98]"
+                    >
+                      <span>Start Writing Instantly</span>
+                      <ArrowRight className="size-4 ml-1" />
+                    </Button>
+                    <span className="text-[11px] font-mono text-muted-foreground">
+                      Guest Canvas (/new) · No login required
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col items-center lg:items-start gap-1.5">
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      render={<Link href="/dashboard" />}
+                      className="w-full sm:w-auto h-12 rounded-xl px-6 text-sm font-medium bg-card/60 border-border hover:bg-muted/60 transition-all"
+                    >
+                      <span>Open Split Studio</span>
+                    </Button>
+                    <span className="text-[11px] font-mono text-muted-foreground">
+                      Member Workspace · Free account
+                    </span>
+                  </div>
+                </motion.div>
               </div>
-            ))}
-          </div>
-        </section>
 
-        {/* Comparison table (SPEC §23) */}
-        <section
-          aria-label="Comparison"
-          className="mx-auto w-full max-w-3xl px-6 pb-20"
-        >
-          <h2 className="mb-6 text-center text-2xl font-bold">
-            How it compares
-          </h2>
-          <div className="overflow-x-auto rounded-xl border">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50 text-left">
-                <tr>
-                  <th scope="col" className="px-4 py-3 font-semibold">
-                    Aspect
-                  </th>
-                  <th scope="col" className="px-4 py-3 font-semibold">
-                    OpenNotepad
-                  </th>
-                  <th scope="col" className="px-4 py-3 font-semibold text-muted-foreground">
-                    A typical online notepad
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {comparison.map((row) => (
-                  <tr key={row.aspect} className="border-t">
-                    <th scope="row" className="px-4 py-3 text-left font-normal">
-                      {row.aspect}
-                    </th>
-                    <td className="px-4 py-3 font-medium">{row.ours}</td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {row.typical}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+              {/* Right Column: 3D Interactive Studio Showcase */}
+              <div className="lg:col-span-7 w-full min-w-0">
+                <InteractiveHeroDemo />
+              </div>
+            </div>
+          </section>
 
-        {/* Self-host teaser (SPEC §23) */}
-        <section
-          id="self-host"
-          aria-label="Self-hosting"
-          className="mx-auto w-full max-w-3xl px-6 pb-20"
-        >
-          <div className="rounded-xl border bg-card p-8 text-center">
-            <Server className="mx-auto mb-3 size-6 text-muted-foreground" aria-hidden />
-            <h2 className="mb-2 text-2xl font-bold">Own your notes, host your notes</h2>
-            <p className="mx-auto mb-4 max-w-xl text-sm text-muted-foreground">
-              One command for the app. Supabase runs from their official hosted
-              service or their official self-hosted stack — two documented
-              paths, no vendored re-implementations.
-            </p>
-            <pre className="mx-auto mb-4 w-fit max-w-full overflow-x-auto rounded-lg border bg-black/90 px-4 py-3 text-left font-mono text-xs text-green-400">
-              <code>git clone &lt;repo&gt; &amp;&amp; cd opennotepad{"\n"}cp .env.example .env.local{"\n"}docker compose up --build</code>
-            </pre>
-            <Button variant="outline" render={<Link href="#self-host" />}>
-              <FileCode2 className="size-4" aria-hidden />
-              Full guide in the README
-            </Button>
-          </div>
-        </section>
-
-        {/* FAQ accordion (SPEC §23) — native details/summary: keyboard and
-            screen-reader friendly with zero JS and zero motion. */}
-        <section
-          aria-label="Frequently asked questions"
-          className="mx-auto w-full max-w-3xl px-6 pb-20"
-        >
-          <h2 className="mb-6 text-center text-2xl font-bold">FAQ</h2>
-          <div className="flex flex-col gap-2">
-            {faqs.map((faq) => (
-              <details
-                key={faq.q}
-                className="group rounded-xl border bg-card px-4 py-3"
-              >
-                <summary className="cursor-pointer list-none font-medium marker:hidden">
-                  <span className="flex items-center justify-between gap-4">
-                    {faq.q}
-                    <ChevronDown
-                      className="size-4 shrink-0 text-muted-foreground motion-safe:transition-transform group-open:rotate-180"
-                      aria-hidden
-                    />
-                  </span>
-                </summary>
-                <p className="pt-3 text-sm text-muted-foreground">{faq.a}</p>
-              </details>
-            ))}
-          </div>
-        </section>
-
-        {/* Tech badges */}
-        <section aria-label="Built with" className="mx-auto w-full max-w-4xl px-6 pb-20">
-          <ul className="flex flex-wrap items-center justify-center gap-2">
-            {techStack.map((name) => (
-              <li
-                key={name}
-                className="rounded-full border bg-card px-3 py-1 text-xs text-muted-foreground"
-              >
-                {name}
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        {/* Final CTA */}
-        <section className="mx-auto w-full max-w-3xl px-6 pb-24 text-center">
-          <h2 className="mb-3 text-2xl font-bold">Ready in one click</h2>
-          <p className="mx-auto mb-6 max-w-md text-muted-foreground">
-            No account, no setup, no upsell. Open the editor and write.
-          </p>
-          <Button
-            size="lg"
-            render={<Link href="/new" />}
-            className="h-11 px-6 text-base"
+          {/* Integrated Bottom Architecture & Speed Telemetry Bar */}
+          <section
+            aria-label="Architecture Highlights"
+            className="relative z-10 border-y border-border/50 bg-muted/20 backdrop-blur-sm py-6 px-4 sm:px-8 w-full"
           >
-            Start Writing
-            <ArrowRight className="size-4" aria-hidden />
-          </Button>
-        </section>
+            <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+              {architectureStats.map((stat, idx) => {
+                const Icon = stat.icon
+                return (
+                  <motion.div
+                    key={stat.label}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.45, delay: 0.25 + idx * 0.07 }}
+                    whileHover={{ y: -2 }}
+                    className="flex items-start gap-3.5 p-3.5 sm:p-4 rounded-2xl bg-card/70 border border-border/50 hover:border-brand/40 transition-all"
+                  >
+                    <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand/15 text-brand-ink border border-brand/25">
+                      <Icon className="size-4.5" />
+                    </div>
+                    <div className="space-y-0.5 min-w-0 flex-1">
+                      <div className="flex flex-wrap items-baseline gap-x-2">
+                        <span className="font-mono text-base font-bold text-foreground whitespace-nowrap">
+                          {stat.metric}
+                        </span>
+                        <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">
+                          {stat.label}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        {stat.description}
+                      </p>
+                    </div>
+                  </motion.div>
+                )
+              })}
+            </div>
+          </section>
+        </div>
+
+        {/* Streamlined 4-Card Bento Grid */}
+        <LandingBento />
+
+        {/* Deep Comparison Table */}
+        <LandingComparison />
+
+        {/* Interactive FAQ Accordion */}
+        <LandingFaq />
+
+        {/* High-Impact Bottom CTA Banner */}
+        <LandingCta />
       </main>
 
-      <footer className="flex flex-wrap items-center justify-between gap-2 border-t px-6 py-4 text-sm text-muted-foreground">
-        <p>MIT licensed. Free, forever.</p>
-        <span className="flex items-center gap-1">
-          <GitBranch className="size-4" aria-hidden />
-          <ShieldCheck className="size-4" aria-hidden />
-          Open source · Self-hostable
-        </span>
-      </footer>
+      {/* Comprehensive Multi-Column Footer */}
+      <LandingFooter />
     </div>
   )
 }

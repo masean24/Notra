@@ -1,6 +1,6 @@
-# OpenNotepad — production Next.js image (SPEC §19)
-# Build:  docker build -t opennotepad .
-# Run:    docker run --env-file .env.local -p 3000:3000 opennotepad
+# Notra — production Next.js image (SPEC §19)
+# Build:  docker build -t notra .
+# Run:    docker run --env-file .env.local -p 3000:3000 notra
 # The app expects a reachable Supabase backend — see docker-compose.yml and
 # the README ("Self-hosting") for the two supported Supabase paths.
 

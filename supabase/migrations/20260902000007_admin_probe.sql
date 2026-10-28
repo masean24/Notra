@@ -1,5 +1,5 @@
 -- ============================================================================
--- OpenNotepad — Migration 0008: admin probe log (Phase 9)
+-- Notra — Migration 0008: admin probe log (Phase 9)
 --
 -- Durable record of visits to the /admin decoy: hashed IP + requested path.
 -- Written by SECURITY DEFINER log_admin_probe (anon-executable, self-bounded

@@ -20,7 +20,7 @@ export const metadata = {
 export default async function InternalAdminPage() {
   const requestHeaders = await headers()
   const secret = process.env.ADMIN_SECRET_PATH
-  const entryHeader = requestHeaders.get("x-opennotepad-admin-entry")
+  const entryHeader = requestHeaders.get("x-notra-admin-entry")
 
   if (!secret || !secret.startsWith("/") || entryHeader !== secret) {
     notFound()

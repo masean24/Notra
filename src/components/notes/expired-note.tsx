@@ -1,5 +1,6 @@
 import Link from "next/link"
-import { ClockAlert, NotebookPen } from "lucide-react"
+import { ClockAlert } from "lucide-react"
+import { NotraMark } from "@/components/brand/notra-logo"
 
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -16,10 +17,10 @@ export function ExpiredNote() {
         <Link
           href="/"
           className="flex items-center gap-2 text-sm font-semibold"
-          aria-label="OpenNotepad home"
+          aria-label="Notra home"
         >
-          <NotebookPen className="size-4" aria-hidden />
-          OpenNotepad
+          <NotraMark className="size-4" />
+          Notra
         </Link>
         <ThemeToggle />
       </header>

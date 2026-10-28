@@ -1,5 +1,5 @@
 -- ============================================================================
--- OpenNotepad — Migration 0004: Accounts & dashboard (Phase 3)
+-- Notra — Migration 0004: Accounts & dashboard (Phase 3)
 --
 -- Adds:
 --   * create_user_note — owned-note creation (authenticated callers only)

@@ -1,5 +1,5 @@
 -- ============================================================================
--- OpenNotepad — Migration 0003: verify_edit_code status-return fix
+-- Notra — Migration 0003: verify_edit_code status-return fix
 --
 -- The previous version raised exceptions on invalid/locked attempts. A raised
 -- exception aborts the caller's transaction, which silently rolled back the

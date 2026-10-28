@@ -1,5 +1,5 @@
 -- ============================================================================
--- OpenNotepad — Migration 0001: Initial schema (Phase 1)
+-- Notra — Migration 0001: Initial schema (Phase 1)
 --
 -- Creates the `profiles` and `notes` tables with Row Level Security.
 --

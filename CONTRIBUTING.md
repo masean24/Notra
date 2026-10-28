@@ -1,6 +1,6 @@
-# Contributing to OpenNotepad
+# Contributing to Notra
 
-Thanks for helping make OpenNotepad better! This project is MIT licensed, free forever, and built to stay that way: no ads, no paywalls, no tracking.
+Thanks for helping make Notra better! This project is MIT licensed, free forever, and built to stay that way: no ads, no paywalls, no tracking.
 
 ## Getting started
 

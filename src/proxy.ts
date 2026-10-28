@@ -31,12 +31,12 @@ export async function proxy(request: NextRequest) {
     // headers() can read it; a direct /internal-admin visit has no such
     // request header, and forging it requires knowing the secret.
     const forwardedHeaders = new Headers(request.headers)
-    forwardedHeaders.set("x-opennotepad-admin-entry", secret)
+    forwardedHeaders.set("x-notra-admin-entry", secret)
     const rewritten = NextResponse.rewrite(url, {
       request: { headers: forwardedHeaders },
     })
     // Mirror on the response for observability/debugging only.
-    rewritten.headers.set("x-opennotepad-admin-entry", secret)
+    rewritten.headers.set("x-notra-admin-entry", secret)
     return rewritten
   }
 

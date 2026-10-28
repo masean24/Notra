@@ -106,7 +106,7 @@ export function ClaimNoteForm() {
                 id="claim-link"
                 value={noteLink}
                 onChange={(event) => setNoteLink(event.target.value)}
-                placeholder="https://opennotepad.app/n/Ab8KxP2"
+                placeholder="https://notra.app/n/Ab8KxP2"
                 autoComplete="off"
                 required
               />

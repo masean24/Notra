@@ -24,6 +24,15 @@
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
   --color-ring: var(--ring);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-obsidian: var(--notra-obsidian);
+  --color-warm-paper: var(--notra-warm-paper);
+  --color-olive: var(--notra-olive);
+  --color-graphite: var(--notra-graphite);
+  --color-soft-border: var(--notra-soft-border);
+  --color-olive-tint: var(--notra-olive-tint);
+  --color-deep-charcoal: var(--notra-deep-charcoal);
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
@@ -48,84 +57,107 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/*
+ * Notra design tokens — "Quiet Premium".
+ * Brand palette (raw values) lives in the --notra-* variables; semantic shadcn
+ * tokens below reference them so every component picks up the brand.
+ */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  /* Notra brand palette */
+  --notra-obsidian: #171717;
+  --notra-warm-paper: #faf9f6;
+  --notra-olive: #a5ad91;
+  --notra-graphite: #777777;
+  --notra-soft-border: #e7e5e0;
+  --notra-surface: #ffffff;
+  --notra-olive-tint: #eef0e8;
+  --notra-deep-charcoal: #242424;
+  /* Derived: olive dark enough for small text on light surfaces (AA) */
+  --notra-olive-ink: #566040;
+
+  --background: var(--notra-warm-paper);
+  --foreground: var(--notra-obsidian);
+  --card: var(--notra-surface);
+  --card-foreground: var(--notra-obsidian);
+  --popover: var(--notra-surface);
+  --popover-foreground: var(--notra-obsidian);
+  --primary: var(--notra-obsidian);
+  --primary-foreground: var(--notra-warm-paper);
+  --secondary: #f1f0eb;
+  --secondary-foreground: var(--notra-obsidian);
+  --muted: #f1f0eb;
+  /* Graphite (#777) is 4.3:1 on Warm Paper; #6b6b6b reaches AA (5.1:1) for small text */
+  --muted-foreground: #6b6b6b;
+  --accent: var(--notra-olive-tint);
+  --accent-foreground: var(--notra-obsidian);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  --border: var(--notra-soft-border);
+  --input: var(--notra-soft-border);
+  --ring: var(--notra-olive);
+  --brand: var(--notra-olive);
+  --brand-ink: var(--notra-olive-ink);
+  --chart-1: #c9cfba;
+  --chart-2: var(--notra-olive);
+  --chart-3: #7f8868;
+  --chart-4: var(--notra-olive-ink);
+  --chart-5: var(--notra-obsidian);
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: var(--notra-warm-paper);
+  --sidebar-foreground: var(--notra-obsidian);
+  --sidebar-primary: var(--notra-obsidian);
+  --sidebar-primary-foreground: var(--notra-warm-paper);
+  --sidebar-accent: var(--notra-olive-tint);
+  --sidebar-accent-foreground: var(--notra-obsidian);
+  --sidebar-border: var(--notra-soft-border);
+  --sidebar-ring: var(--notra-olive);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --background: var(--notra-obsidian);
+  --foreground: #f4f2ed;
+  --card: var(--notra-deep-charcoal);
+  --card-foreground: #f4f2ed;
+  --popover: var(--notra-deep-charcoal);
+  --popover-foreground: #f4f2ed;
+  --primary: #f4f2ed;
+  --primary-foreground: var(--notra-obsidian);
+  --secondary: #2e2e2c;
+  --secondary-foreground: #f4f2ed;
+  --muted: #2a2a28;
+  --muted-foreground: #a9a69f;
+  --accent: #32352b;
+  --accent-foreground: #f4f2ed;
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --border: rgb(244 242 237 / 11%);
+  --input: rgb(244 242 237 / 15%);
+  --ring: var(--notra-olive);
+  --brand: var(--notra-olive);
+  --brand-ink: #c5cbb2;
+  --chart-1: #c9cfba;
+  --chart-2: var(--notra-olive);
+  --chart-3: #7f8868;
+  --chart-4: #5f6850;
+  --chart-5: #3c4132;
+  --sidebar: var(--notra-deep-charcoal);
+  --sidebar-foreground: #f4f2ed;
+  --sidebar-primary: var(--notra-olive);
+  --sidebar-primary-foreground: var(--notra-obsidian);
+  --sidebar-accent: #32352b;
+  --sidebar-accent-foreground: #f4f2ed;
+  --sidebar-border: rgb(244 242 237 / 11%);
+  --sidebar-ring: var(--notra-olive);
 }
-
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;
+    overflow-x: clip;
   }
   html {
     @apply font-sans;
+    overflow-x: clip;
   }
 }
 
@@ -144,6 +176,10 @@
   outline: none;
   min-height: 50vh;
   white-space: pre-wrap;
+}
+
+.tiptap.tiptap-compact {
+  min-height: 220px;
 }
 
 .tiptap > * + * {
@@ -215,7 +251,84 @@
 }
 
 .tiptap hr {
-  border-color: var(--border);
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1.5rem 0;
+}
+
+.tiptap a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* Task list / Checklist styling */
+.tiptap ul[data-type="taskList"] {
+  list-style: none;
+  padding-inline-start: 0;
+}
+
+.tiptap ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.tiptap ul[data-type="taskList"] li > label {
+  flex-shrink: 0;
+  user-select: none;
+  margin-top: 0.2rem;
+  cursor: pointer;
+}
+
+.tiptap ul[data-type="taskList"] li > label input[type="checkbox"] {
+  cursor: pointer;
+  accent-color: var(--primary);
+  width: 1rem;
+  height: 1rem;
+  border-radius: var(--radius-sm);
+}
+
+.tiptap ul[data-type="taskList"] li[data-checked="true"] > div {
+  text-decoration: line-through;
+  color: var(--muted-foreground);
+}
+
+/* Text highlight marks */
+.tiptap mark {
+  background-color: color-mix(in srgb, var(--notra-olive) 45%, transparent);
+  color: inherit;
+  border-radius: 3px;
+  padding: 0.1em 0.3em;
+}
+
+.dark .tiptap mark {
+  background-color: color-mix(in srgb, var(--notra-olive) 35%, transparent);
+  color: inherit;
+}
+
+/* Editor empty state placeholder */
+.tiptap p.is-editor-empty:first-child::before {
+  color: var(--muted-foreground);
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+/* Editor font families & canvas modes */
+.font-serif-editor {
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+}
+
+.font-mono-editor {
+  font-family: var(--font-mono), monospace;
+}
+
+.font-sans-editor {
+  font-family: var(--font-sans), sans-serif;
 }
 
 @media (prefers-reduced-motion: reduce) {

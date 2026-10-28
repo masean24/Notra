@@ -1,5 +1,5 @@
 -- ============================================================================
--- OpenNotepad — Migration 0002: Guest core loop (Phase 2)
+-- Notra — Migration 0002: Guest core loop (Phase 2)
 --
 -- Adds:
 --   * pgcrypto extension (bcrypt edit-code hashing, SHA-256 token hashing)

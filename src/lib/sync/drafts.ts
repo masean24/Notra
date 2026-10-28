@@ -64,7 +64,7 @@ export interface ConflictRow {
 const DRAFT_KEY = "current"
 export const ID_MAP_KEY = "current"
 
-const db = new Dexie("opennotepad") as Dexie & {
+const db = new Dexie("notra") as Dexie & {
   drafts: EntityTable<StoredDraft, "key">
   pendingOps: EntityTable<PendingOp, "id">
   idMap: EntityTable<IdMapRow, "key">

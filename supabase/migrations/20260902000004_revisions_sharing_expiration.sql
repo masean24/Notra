@@ -1,5 +1,5 @@
 -- ============================================================================
--- OpenNotepad — Migration 0005: Revisions, sharing, expiration (Phase 4)
+-- Notra — Migration 0005: Revisions, sharing, expiration (Phase 4)
 --
 -- Adds:
 --   * note_shares table (opaque share tokens, SHA-256 hashed at rest)
